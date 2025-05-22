@@ -7,3 +7,7 @@ final class GetRoomsByCategory extends RoomsByCategoryEvent {
 
   GetRoomsByCategory({required this.categoryId});
 }
+
+final class GetAllFurEvent extends RoomsByCategoryEvent{
+  
+}

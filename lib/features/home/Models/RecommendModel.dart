@@ -28,11 +28,19 @@ class RecommendedRooms {
     String? description;
     int? categoryId;
     String? imageUrl;
+    int? countReserved;
+    int? time;
+    num? price;
+    int? count;
+    String? woodType;
+    String? woodColor;
+    String? fabricType;
+    String? fabricColor;
     String? createdAt;
     String? updatedAt;
-    List<Items>? items;
+    List<dynamic>? items;
 
-    RecommendedRooms({this.id, this.name, this.description, this.categoryId, this.imageUrl, this.createdAt, this.updatedAt, this.items});
+    RecommendedRooms({this.id, this.name, this.description, this.categoryId, this.imageUrl, this.countReserved, this.time, this.price, this.count, this.woodType, this.woodColor, this.fabricType, this.fabricColor, this.createdAt, this.updatedAt, this.items});
 
     RecommendedRooms.fromJson(Map<String, dynamic> json) {
         id = json["id"];
@@ -40,9 +48,17 @@ class RecommendedRooms {
         description = json["description"];
         categoryId = json["category_id"];
         imageUrl = json["image_url"];
+        countReserved = json["count_reserved"];
+        time = json["time"];
+        price = json["price"];
+        count = json["count"];
+        woodType = json["wood_type"];
+        woodColor = json["wood_color"];
+        fabricType = json["fabric_type"];
+        fabricColor = json["fabric_color"];
         createdAt = json["created_at"];
         updatedAt = json["updated_at"];
-        items = json["items"] == null ? null : (json["items"] as List).map((e) => Items.fromJson(e)).toList();
+        items = json["items"] ?? [];
     }
 
     Map<String, dynamic> toJson() {
@@ -52,51 +68,19 @@ class RecommendedRooms {
         _data["description"] = description;
         _data["category_id"] = categoryId;
         _data["image_url"] = imageUrl;
+        _data["count_reserved"] = countReserved;
+        _data["time"] = time;
+        _data["price"] = price;
+        _data["count"] = count;
+        _data["wood_type"] = woodType;
+        _data["wood_color"] = woodColor;
+        _data["fabric_type"] = fabricType;
+        _data["fabric_color"] = fabricColor;
         _data["created_at"] = createdAt;
         _data["updated_at"] = updatedAt;
         if(items != null) {
-            _data["items"] = items?.map((e) => e.toJson()).toList();
+            _data["items"] = items;
         }
-        return _data;
-    }
-}
-
-class Items {
-    int? id;
-    int? roomId;
-    String? name;
-    int? time;
-    int? price;
-    String? imageUrl;
-    int? count;
-    String? createdAt;
-    String? updatedAt;
-
-    Items({this.id, this.roomId, this.name, this.time, this.price, this.imageUrl, this.count, this.createdAt, this.updatedAt});
-
-    Items.fromJson(Map<String, dynamic> json) {
-        id = json["id"];
-        roomId = json["room_id"];
-        name = json["name"];
-        time = json["time"];
-        price = json["price"];
-        imageUrl = json["image_url"];
-        count = json["count"];
-        createdAt = json["created_at"];
-        updatedAt = json["updated_at"];
-    }
-
-    Map<String, dynamic> toJson() {
-        final Map<String, dynamic> _data = <String, dynamic>{};
-        _data["id"] = id;
-        _data["room_id"] = roomId;
-        _data["name"] = name;
-        _data["time"] = time;
-        _data["price"] = price;
-        _data["image_url"] = imageUrl;
-        _data["count"] = count;
-        _data["created_at"] = createdAt;
-        _data["updated_at"] = updatedAt;
         return _data;
     }
 }
@@ -106,15 +90,18 @@ class RecommendedItems {
     int? roomId;
     String? name;
     int? time;
-    int? price;
+    num? price;
     String? imageUrl;
+    String? description;
     int? count;
+    int? countReserved;
+    int? itemTypeId;
     String? createdAt;
     String? updatedAt;
     Room? room;
     int? categoryId;
 
-    RecommendedItems({this.id, this.roomId, this.name, this.time, this.price, this.imageUrl, this.count, this.createdAt, this.updatedAt, this.room, this.categoryId});
+    RecommendedItems({this.id, this.roomId, this.name, this.time, this.price, this.imageUrl, this.description, this.count, this.countReserved, this.itemTypeId, this.createdAt, this.updatedAt, this.room, this.categoryId});
 
     RecommendedItems.fromJson(Map<String, dynamic> json) {
         id = json["id"];
@@ -123,7 +110,10 @@ class RecommendedItems {
         time = json["time"];
         price = json["price"];
         imageUrl = json["image_url"];
+        description = json["description"];
         count = json["count"];
+        countReserved = json["count_reserved"];
+        itemTypeId = json["item_type_id"];
         createdAt = json["created_at"];
         updatedAt = json["updated_at"];
         room = json["room"] == null ? null : Room.fromJson(json["room"]);
@@ -138,7 +128,10 @@ class RecommendedItems {
         _data["time"] = time;
         _data["price"] = price;
         _data["image_url"] = imageUrl;
+        _data["description"] = description;
         _data["count"] = count;
+        _data["count_reserved"] = countReserved;
+        _data["item_type_id"] = itemTypeId;
         _data["created_at"] = createdAt;
         _data["updated_at"] = updatedAt;
         if(room != null) {
@@ -155,10 +148,18 @@ class Room {
     String? description;
     int? categoryId;
     String? imageUrl;
+    int? countReserved;
+    int? time;
+    num? price;
+    int? count;
+    String? woodType;
+    String? woodColor;
+    String? fabricType;
+    String? fabricColor;
     String? createdAt;
     String? updatedAt;
 
-    Room({this.id, this.name, this.description, this.categoryId, this.imageUrl, this.createdAt, this.updatedAt});
+    Room({this.id, this.name, this.description, this.categoryId, this.imageUrl, this.countReserved, this.time, this.price, this.count, this.woodType, this.woodColor, this.fabricType, this.fabricColor, this.createdAt, this.updatedAt});
 
     Room.fromJson(Map<String, dynamic> json) {
         id = json["id"];
@@ -166,6 +167,14 @@ class Room {
         description = json["description"];
         categoryId = json["category_id"];
         imageUrl = json["image_url"];
+        countReserved = json["count_reserved"];
+        time = json["time"];
+        price = json["price"];
+        count = json["count"];
+        woodType = json["wood_type"];
+        woodColor = json["wood_color"];
+        fabricType = json["fabric_type"];
+        fabricColor = json["fabric_color"];
         createdAt = json["created_at"];
         updatedAt = json["updated_at"];
     }
@@ -177,6 +186,14 @@ class Room {
         _data["description"] = description;
         _data["category_id"] = categoryId;
         _data["image_url"] = imageUrl;
+        _data["count_reserved"] = countReserved;
+        _data["time"] = time;
+        _data["price"] = price;
+        _data["count"] = count;
+        _data["wood_type"] = woodType;
+        _data["wood_color"] = woodColor;
+        _data["fabric_type"] = fabricType;
+        _data["fabric_color"] = fabricColor;
         _data["created_at"] = createdAt;
         _data["updated_at"] = updatedAt;
         return _data;

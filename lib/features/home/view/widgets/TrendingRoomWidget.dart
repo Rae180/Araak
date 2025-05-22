@@ -4,7 +4,8 @@ import 'package:start/features/home/Models/Trending.dart';
 
 class TrendingRoomWidget extends StatelessWidget {
   final TrendingRooms item;
-  const TrendingRoomWidget({super.key, required this.item});
+  final VoidCallback onTap;
+  const TrendingRoomWidget({super.key, required this.item,required this.onTap});
 
   String getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
@@ -19,9 +20,7 @@ class TrendingRoomWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final String validUrl = getValidImageUrl(item.imageUrl);
     return GestureDetector(
-      onTap: () {
-        // TODO: Implement navigation or animation effect.
-      },
+      onTap: onTap,
       child: Container(
         width: 230, // Slightly larger for more emphasis.
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

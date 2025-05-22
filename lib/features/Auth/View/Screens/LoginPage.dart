@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/features/Auth/Bloc/LoginBloc/login_bloc.dart';
 import 'package:start/features/Auth/View/Screens/SignUpPage.dart';
-import 'package:start/features/home/view/Screens/homepage.dart';
+import 'package:start/features/home/view/Screens/Home.dart';
 
 class LoginPage extends StatefulWidget {
   static const String routeName = '/login';
@@ -147,7 +147,8 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                         WidgetsBinding.instance.addPostFrameCallback((_) {
-                          Navigator.of(context).pushReplacementNamed(HomePage.routeName);
+                          Navigator.of(context)
+                              .pushReplacementNamed(home.routeName);
                         });
                       }
                     },

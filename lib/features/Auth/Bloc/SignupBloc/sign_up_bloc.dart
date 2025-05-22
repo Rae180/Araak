@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:start/core/api_service/base_Api_service.dart';

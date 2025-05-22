@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:start/core/api_service/base_Api_service.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/features/Auth/Bloc/SignupBloc/sign_up_bloc.dart';
 import 'package:start/features/Auth/Models/User.dart';
 import 'package:start/features/Auth/View/Screens/LoginPage.dart';
-import 'package:start/features/home/view/Screens/homepage.dart';
+import 'package:start/features/home/view/Screens/Home.dart';
 
 class SignUpPage extends StatefulWidget {
   static const String routeName = '/signup_screen';
@@ -354,7 +353,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               );
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 Navigator.of(context)
-                                    .pushReplacementNamed(HomePage.routeName);
+                                    .pushReplacementNamed(home.routeName);
                               });
                             }
                           },

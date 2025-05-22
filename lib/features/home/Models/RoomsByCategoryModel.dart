@@ -49,7 +49,7 @@ class Rooms {
   String? description;
   String? imageUrl;
   int? likesCount;
-  double? averageRating;
+  num? averageRating;
   List<String>? feedbacks;
 
   Rooms(

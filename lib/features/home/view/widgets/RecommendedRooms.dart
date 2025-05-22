@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:like_button/like_button.dart';
 import 'package:start/core/constants/api_constants.dart';
 import 'package:start/features/home/Models/RecommendModel.dart';
 
 class RecommendedRoomsWidget extends StatelessWidget {
   final RecommendedRooms item;
-  const RecommendedRoomsWidget({super.key, required this.item});
+  final VoidCallback onTap;
+  const RecommendedRoomsWidget(
+      {super.key, required this.item, required this.onTap});
 
   String getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
@@ -21,10 +24,9 @@ class RecommendedRoomsWidget extends StatelessWidget {
     final String validUrl = getValidImageUrl(item.imageUrl);
 
     return GestureDetector(
-      onTap: () {
-        // TODO: Implement navigation to item details, etc.
-      },
+      onTap: onTap,
       child: Container(
+        width: 230,
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -134,25 +136,25 @@ class RecommendedRoomsWidget extends StatelessWidget {
                 left: 16,
                 child: Row(
                   children: [
-                    // Container(
-                    //   padding: const EdgeInsets.symmetric(
-                    //       horizontal: 12, vertical: 6),
-                    //   decoration: BoxDecoration(
-                    //     gradient: const LinearGradient(
-                    //       colors: [Colors.deepOrange, Colors.redAccent],
-                    //     ),
-                    //     borderRadius: BorderRadius.circular(12),
-                    //   ),
-                    //   child: Text(
-                    //     NumberFormat.currency(locale: "en_US", symbol: "\$")
-                    //         .format(item.price ?? 0),
-                    //     style: const TextStyle(
-                    //       fontSize: 16,
-                    //       fontWeight: FontWeight.bold,
-                    //       color: Colors.white,
-                    //     ),
-                    //   ),
-                    // ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Colors.deepOrange, Colors.redAccent],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        NumberFormat.currency(locale: "en_US", symbol: "\$")
+                            .format(item.price ?? 0),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Row(
                       children: [
@@ -171,22 +173,45 @@ class RecommendedRoomsWidget extends StatelessWidget {
                 ),
               ),
               // Favorite icon button.
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black54,
-                  ),
-                  child: const Icon(
-                    Icons.favorite_border,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
+              // Positioned(
+              //   top: 12,
+              //   right: 12,
+              //   child: Container(
+              //       padding: const EdgeInsets.all(8),
+              //       decoration: BoxDecoration(
+              //         shape: BoxShape.circle,
+              //         color: Colors.black54,
+              //       ),
+              //       child: LikeButton(
+              //         size: 28,
+              //         isLiked: state.room.room!.isFavorite ?? false,
+              //         onTap: (bool isLiked) async {
+              //           // Dispatch your event to update the favorite state.
+              //           BlocProvider.of<FavBloc>(context)
+              //               .add(AddToFavEvent(state.room.room!.id, null));
+              //           // Return the new state for the LikeButton animation.
+              //           return !isLiked;
+              //         },
+              //         likeBuilder: (bool isLiked) {
+              //           // Build the icon based on the liked state.
+              //           return Icon(
+              //             isLiked
+              //                 ? Icons.bookmark
+              //                 : Icons.bookmark_border_outlined,
+              //             color: Colors.black,
+              //             size: 28,
+              //           );
+              //         },
+              //         circleColor: const CircleColor(
+              //           start: Colors.black26,
+              //           end: Colors.black12,
+              //         ),
+              //         bubblesColor: const BubblesColor(
+              //           dotPrimaryColor: Colors.black38,
+              //           dotSecondaryColor: Colors.black45,
+              //         ),
+              //       )),
+              // ),
             ],
           ),
         ),

@@ -1,10 +1,9 @@
-import 'dart:convert';
-
 import 'package:bloc/bloc.dart';
 import 'package:start/core/api_service/base_Api_service.dart';
 import 'package:start/core/api_service/base_repo.dart';
 import 'package:start/core/constants/api_constants.dart';
 import 'package:start/core/errors/failures.dart';
+import 'package:start/features/home/Models/AllFur.dart';
 import 'package:start/features/home/Models/RoomsByCategoryModel.dart';
 
 part 'rooms_by_category_event.dart';
@@ -29,6 +28,19 @@ class RoomsByCategoryBloc
         emit(RoomsByCategorySuccess(rooms: responseData));
       });
     });
+
+    on<GetAllFurEvent>(((event, emit) async {
+      final result = await BaseRepo.repoRequest(request: () async {
+        final response = await client.getRequest(url: ApiConstants.showAllFur);
+        final furr = AllFur.fromJson(response);
+        return furr;
+      });
+      result.fold((f) {
+        emit(_mapFailureToState(f));
+      }, (responseData) {
+        emit(GetAllFurSuccess(furnitures: responseData));
+      });
+    }));
   }
   _mapFailureToState(Failure f) {
     switch (f.runtimeType) {

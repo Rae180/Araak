@@ -12,6 +12,12 @@ final class RoomsByCategorySuccess extends RoomsByCategoryState {
   RoomsByCategorySuccess({required this.rooms});
 }
 
+final class GetAllFurSuccess extends RoomsByCategoryState {
+  final AllFur furnitures;
+
+  GetAllFurSuccess({required this.furnitures});
+}
+
 final class RoomsByCategoryError extends RoomsByCategoryState {
   final String message;
 

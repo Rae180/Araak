@@ -3,18 +3,23 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 /// Map of category names to their respective icons.
 final Map<String, IconData> categoryIconMap = {
-  'Living Room': FontAwesomeIcons.couch,
-  'Kids Room': FontAwesomeIcons.child,
-  'Bedroom': FontAwesomeIcons.bed,
-  'Guest Room': FontAwesomeIcons.hotel,
-  'Dining Room': FontAwesomeIcons.utensils,
+  'all':FontAwesomeIcons.list,
+  'living room': FontAwesomeIcons.couch,
+  'kids room': FontAwesomeIcons.child,
+  'bedroom': FontAwesomeIcons.bed,
+  'guest room': FontAwesomeIcons.hotel,
+  'dining room': FontAwesomeIcons.utensils,
   // Add new category mappings as needed.
 };
 
 /// Helper function that dynamically assigns an icon based on category name.
 IconData getIconForCategory(String? categoryName) {
   print(categoryName);
-  return categoryIconMap[categoryName] ?? FontAwesomeIcons.box;
+  return categoryIconMap[categoryName?.trim().toLowerCase()] ?? FontAwesomeIcons.box;
+}
+
+void defaultCategoryTap() {
+  print("The default category was tapped");
 }
 
 class CategoryTab extends StatelessWidget {

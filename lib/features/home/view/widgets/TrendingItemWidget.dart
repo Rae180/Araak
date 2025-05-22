@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 
 class TrendingItemWidget extends StatelessWidget {
   final TrendingItems item;
-  const TrendingItemWidget({Key? key, required this.item}) : super(key: key);
+  final VoidCallback onTap;
+  const TrendingItemWidget({Key? key, required this.item, required this.onTap})
+      : super(key: key);
 
   String getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
@@ -20,9 +22,7 @@ class TrendingItemWidget extends StatelessWidget {
     final String validUrl = getValidImageUrl(item.imageUrl);
 
     return GestureDetector(
-      onTap: () {
-        // TODO: Implement navigation or animation effect.
-      },
+      onTap: onTap,
       child: Container(
         width: 230, // Slightly larger for more emphasis.
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:start/config/routes/app_router.dart';
-import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/core/managers/theme_manager.dart';
-import 'package:start/features/Auth/View/Screens/SignUpPage.dart';
 import 'package:start/features/Auth/View/Screens/Araak_Splash_Screen.dart';
-import 'package:start/features/Auth/View/Screens/WelcomeScreen.dart';
 import 'package:start/features/localization/cubit/lacalization_cubit.dart';
 import 'package:start/features/localization/localize_app_impl.dart';
 import 'package:start/main.dart';

@@ -5,7 +5,10 @@ import 'package:start/features/home/Models/RecommendModel.dart';
 
 class RecommendedItemWidget extends StatelessWidget {
   final RecommendedItems item;
-  const RecommendedItemWidget({Key? key, required this.item}) : super(key: key);
+  final VoidCallback onTap;
+  const RecommendedItemWidget(
+      {Key? key, required this.item, required this.onTap})
+      : super(key: key);
 
   String getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
@@ -24,9 +27,7 @@ class RecommendedItemWidget extends StatelessWidget {
     const double cardHeight = 270;
 
     return GestureDetector(
-      onTap: () {
-        // TODO: Implement navigation to item details, etc.
-      },
+      onTap: onTap,
       child: Container(
         width: cardWidth,
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -177,22 +178,22 @@ class RecommendedItemWidget extends StatelessWidget {
                 ),
               ),
               // Favorite icon button.
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black54,
-                  ),
-                  child: const Icon(
-                    Icons.favorite_border,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
+              // Positioned(
+              //   top: 12,
+              //   right: 12,
+              //   child: Container(
+              //     padding: const EdgeInsets.all(8),
+              //     decoration: BoxDecoration(
+              //       shape: BoxShape.circle,
+              //       color: Colors.black54,
+              //     ),
+              //     child: const Icon(
+              //       Icons.favorite_border,
+              //       color: Colors.white,
+              //       size: 24,
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),
