@@ -16,6 +16,7 @@ class LocalizeAppImpl implements LocalizeApp {
     String? lang =  PreferenceUtils.getString(
       kLanguage,
     );
+    print(lang);
     if (lang != null) {
       return lang;
     } else {

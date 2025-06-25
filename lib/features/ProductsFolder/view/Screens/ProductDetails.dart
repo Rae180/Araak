@@ -10,6 +10,7 @@ import 'package:start/features/Customizations/view/Screens/CustomizationsPage.da
 import 'package:start/features/Favoritse/Bloc/FavBloc/fav_bloc.dart';
 import 'package:start/features/ProductsFolder/Bloc/RoomDetailesBloc/room_details_bloc.dart';
 import 'package:start/features/ProductsFolder/Models/RoomDetails.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   static const String routeName = '/products_details';
@@ -232,15 +233,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            const CustomizationsPage()),
+                                            CustomizationsPage(
+                                              id: state.room.room!.id,
+                                            )),
                                   );
                                 },
                                 icon: const Icon(
                                   Icons.settings,
                                   color: Colors.white,
                                 ),
-                                label: const Text(
-                                  'Assignment',
+                                label:  Text(
+                                  AppLocalizations.of(context)!.assignment,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -260,8 +263,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               ),
                               const SizedBox(height: 24),
                               // Colors section.
-                              const Text(
-                                'Colors',
+                               Text(
+                                AppLocalizations.of(context)!.colors,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Times New Roman',
@@ -294,7 +297,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               ),
                               const SizedBox(height: 24),
                               // Description section.
-                              const Text('Description',
+                             Text(AppLocalizations.of(context)!.descretion,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Times New Roman',
@@ -314,8 +317,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               const SizedBox(height: 24),
                               // Horizontal list of included items.
                               if (items != null && items.isNotEmpty) ...[
-                                const Text(
-                                  'Included Items',
+                                 Text(
+                                  AppLocalizations.of(context)!.includeditems,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Times New Roman',
@@ -399,8 +402,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               const SizedBox(height: 24),
                               // Feedback (Comments) Section.
                               if (feedbacks.isNotEmpty) ...[
-                                const Text(
-                                  'Feedback',
+                                 Text(
+                                  AppLocalizations.of(context)!.feedback,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Times New Roman',
@@ -498,8 +501,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     },
                                     icon: const Icon(Icons.shopping_cart,
                                         color: Colors.white),
-                                    label: const Text(
-                                      'Add to Cart',
+                                    label:  Text(
+                                      AppLocalizations.of(context)!.addtocart,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontFamily: 'Times New Roman',

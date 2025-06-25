@@ -32,9 +32,9 @@ class Items {
     int? id;
     String? name;
     String? imageUrl;
-    String? price;
+    num? price;
     int? count;
-    String? time;
+    num? time;
 
     Items({this.id, this.name, this.imageUrl, this.price, this.count, this.time});
 
@@ -63,8 +63,8 @@ class Rooms {
     int? id;
     String? name;
     String? imageUrl;
-    String? price;
-    String? time;
+    num? price;
+    num? time;
     int? count;
 
     Rooms({this.id, this.name, this.imageUrl, this.price, this.time, this.count});

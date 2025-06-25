@@ -118,22 +118,13 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  IconButton(
-                                    onPressed: () {
-                                      BlocProvider.of<FavBloc>(context).add(
-                                          AddToFavEvent(discount.roomId, null));
-                                    },
-                                    icon: const Icon(
-                                      Icons.bookmark_border_outlined,
-                                      color: Colors.black,
-                                      size: 28,
-                                    ),
-                                  ),
                                 ],
                               ),
                               const SizedBox(height: 12),
                               // Discount Information: Percentage, Start Date, End Date.
                               Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(

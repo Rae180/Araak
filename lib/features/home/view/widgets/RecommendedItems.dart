@@ -165,13 +165,13 @@ class RecommendedItemWidget extends StatelessWidget {
                       children: [
                         const Icon(Icons.star, size: 18, color: Colors.amber),
                         const SizedBox(width: 4),
-                        // Text(
-                        //   "${item.rating?.toStringAsFixed(1) ?? "0.0"}",
-                        //   style: const TextStyle(
-                        //     color: Colors.white,
-                        //     fontSize: 16,
-                        //   ),
-                        // )
+                        Text(
+                          "${item.averageRating?.toStringAsFixed(1) ?? "0.0"}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        )
                       ],
                     ),
                   ],

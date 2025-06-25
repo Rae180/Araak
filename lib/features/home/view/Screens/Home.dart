@@ -3,8 +3,8 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:start/features/Cart/view/Screens/CartScreen.dart';
 import 'package:start/features/Customizations/view/Screens/CustomizationsPage.dart';
 import 'package:start/features/Favoritse/view/Screens/FavPage.dart';
-import 'package:start/features/Settings/view/Screens/SettingsPage.dart';
 import 'package:start/features/home/view/Screens/homepage.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class home extends StatefulWidget {
   static const String routeName = '/home';
@@ -23,7 +23,6 @@ class _homeState extends State<home> {
     FavPage(),
     CartScreen(),
     CustomizationsPage(),
-    SettingsPage(),
   ];
 
   @override
@@ -87,22 +86,22 @@ class _homeState extends State<home> {
             items: [
               SalomonBottomBarItem(
                 icon: const Icon(Icons.home_outlined),
-                title: const Text("Home"),
+                title: Text(AppLocalizations.of(context)!.home),
                 selectedColor: Colors.black,
               ),
               SalomonBottomBarItem(
                 icon: const Icon(Icons.favorite_border),
-                title: const Text("Fav"),
+                title: Text(AppLocalizations.of(context)!.fav),
                 selectedColor: Colors.black,
               ),
               SalomonBottomBarItem(
                 icon: const Icon(Icons.shopping_cart_outlined),
-                title: const Text("Cart"),
+                title: Text(AppLocalizations.of(context)!.cart),
                 selectedColor: Colors.black,
               ),
               SalomonBottomBarItem(
                 icon: const Icon(Icons.edit_note_outlined),
-                title: const Text("Custom"),
+                title: Text(AppLocalizations.of(context)!.custom),
                 selectedColor: Colors.black,
               ),
             ],

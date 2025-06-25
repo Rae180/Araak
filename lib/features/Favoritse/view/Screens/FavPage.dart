@@ -9,6 +9,7 @@ import 'package:start/features/Favoritse/view/widgets/FavRoomWidget.dart';
 import 'package:start/features/ProductsFolder/Bloc/RoomDetailesBloc/room_details_bloc.dart';
 import 'package:start/features/ProductsFolder/view/Screens/ItemDetailesPage.dart';
 import 'package:start/features/ProductsFolder/view/Screens/ProductDetails.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FavPage extends StatelessWidget {
   static const String routeName = '/favorites_page';
@@ -33,8 +34,8 @@ class FavPage extends StatelessWidget {
         appBar: AppBar(
           elevation: 0,
           scrolledUnderElevation: 0,
-          title: const Text(
-            'FAVORITES',
+          title:  Text(
+            AppLocalizations.of(context)!.fav,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
@@ -148,7 +149,7 @@ class FavPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Add all to Cart',
+                            AppLocalizations.of(context)!.addalltocart,
                             style: TextStyle(
                               color: Colors.white,
                             ),

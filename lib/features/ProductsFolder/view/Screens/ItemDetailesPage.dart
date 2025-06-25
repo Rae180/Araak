@@ -7,7 +7,9 @@ import 'package:start/features/Cart/Bloc/CartBloc/cart_bloc.dart';
 import 'package:start/features/Customizations/view/Screens/CustomizationsPage.dart';
 import 'package:start/features/Favoritse/Bloc/FavBloc/fav_bloc.dart';
 import 'package:start/features/ProductsFolder/Bloc/ItemDetaliesBloc/item_detailes_bloc.dart';
-import 'package:start/features/ProductsFolder/Bloc/RoomDetailesBloc/room_details_bloc.dart';
+import 'package:start/features/ProductsFolder/view/widgets/FabricDetailsWidget.dart';
+import 'package:start/features/ProductsFolder/view/widgets/woodDetailsWidget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ItemDetailesPage extends StatefulWidget {
   static const String routeName = '/item_detailes_page';
@@ -60,13 +62,12 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
         backgroundColor: Colors.white,
         body: BlocBuilder<ItemDetailesBloc, ItemDetailesState>(
           builder: (context, state) {
-            if (state is RoomDetailesLoading) {
+            if (state is ItemDetailesLoading) {
               return Center(
                 child: CircularProgressIndicator(),
               );
             } else if (state is ItemDetailesSuccess) {
-              final items = state.item.item ?? [];
-              final feedbacks = state.item.item!.feedbacks ?? [];
+              final feedbacks = state.item.ratings ?? [];
               return Stack(
                 children: [
                   // صورة
@@ -76,7 +77,7 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
-                            getValidImageUrl(state.item.item!.image)),
+                            getValidImageUrl(state.item.item!.imageUrl)),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -137,47 +138,46 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                       ),
                                     ),
                                   ),
-                                  // LikeButton(
-                                  //   size: 28,
-                                  //   isLiked:
-                                  //       state.item.item.isFavorite ?? false,
-                                  //   onTap: (bool isLiked) async {
-                                  //     // Dispatch your event to update the favorite state.
-                                  //     BlocProvider.of<FavBloc>(context).add(
-                                  //         AddToFavEvent(
-                                  //             state.item.item!.id, null));
-                                  //     // Return the new state for the LikeButton animation.
-                                  //     return !isLiked;
-                                  //   },
-                                  //   likeBuilder: (bool isLiked) {
-                                  //     // Build the icon based on the liked state.
-                                  //     return Icon(
-                                  //       isLiked
-                                  //           ? Icons.bookmark
-                                  //           : Icons.bookmark_border_outlined,
-                                  //       color: Colors.black,
-                                  //       size: 28,
-                                  //     );
-                                  //   },
-                                  //   circleColor: const CircleColor(
-                                  //     start: Colors.black26,
-                                  //     end: Colors.black12,
-                                  //   ),
-                                  //   bubblesColor: const BubblesColor(
-                                  //     dotPrimaryColor: Colors.black38,
-                                  //     dotSecondaryColor: Colors.black45,
-                                  //   ),
-                                  // )
+                                  LikeButton(
+                                    size: 28,
+                                    isLiked: state.item.isFavorite ?? false,
+                                    onTap: (bool isLiked) async {
+                                      // Dispatch your event to update the favorite state.
+                                      BlocProvider.of<FavBloc>(context).add(
+                                          AddToFavEvent(
+                                              null, state.item.item!.id));
+                                      // Return the new state for the LikeButton animation.
+                                      return !isLiked;
+                                    },
+                                    likeBuilder: (bool isLiked) {
+                                      // Build the icon based on the liked state.
+                                      return Icon(
+                                        isLiked
+                                            ? Icons.bookmark
+                                            : Icons.bookmark_border_outlined,
+                                        color: Colors.black,
+                                        size: 28,
+                                      );
+                                    },
+                                    circleColor: const CircleColor(
+                                      start: Colors.black26,
+                                      end: Colors.black12,
+                                    ),
+                                    bubblesColor: const BubblesColor(
+                                      dotPrimaryColor: Colors.black38,
+                                      dotSecondaryColor: Colors.black45,
+                                    ),
+                                  )
                                 ],
                               ),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
-                                  _buildRatingStars(
-                                      state.item.item!.averageRate!),
+                                  _buildRatingStars(state.item.averageRating!),
                                   const SizedBox(width: 8),
                                   Text(
-                                    state.item.item!.averageRate!.toStringAsFixed(1),
+                                    state.item.averageRating!
+                                        .toStringAsFixed(1),
                                     style: TextStyle(
                                       color: Colors.grey[700],
                                       fontFamily: 'Times New Roman',
@@ -200,8 +200,8 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                   Icons.settings,
                                   color: Colors.white,
                                 ),
-                                label: const Text(
-                                  'Assignment',
+                                label: Text(
+                                  AppLocalizations.of(context)!.assignment,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -220,39 +220,8 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              // Colors section.
-                              const Text(
-                                'Colors',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Times New Roman',
-                                  fontSize: 18,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: List.generate(
-                                  6,
-                                  (index) => Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.primaries[
-                                              index % Colors.primaries.length]
-                                          .withOpacity(0.8),
-                                      border: Border.all(
-                                          width: 1,
-                                          color: Colors.grey.shade300),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
                               // Description section.
-                              const Text('Description',
+                              Text(AppLocalizations.of(context)!.descretion,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Times New Roman',
@@ -261,96 +230,37 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                   )),
                               const SizedBox(height: 8),
                               Text(
-                                'state.item.item.descreption!',
+                                state.item.item!.description!,
                                 style: TextStyle(
-                                  color: Colors.grey[800],
+                                  color: Colors.grey[700],
                                   fontFamily: 'Times New Roman',
-                                  fontSize: 17,
+                                  fontSize: 15,
                                   height: 1.4,
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              // // Horizontal list of included items.
-                              // const Text(
-                              //   'Included Materials',
-                              //   style: TextStyle(
-                              //     fontWeight: FontWeight.bold,
-                              //     fontFamily: 'Times New Roman',
-                              //     fontSize: 18,
-                              //     color: Colors.black87,
-                              //   ),
-                              // ),
-                              // const SizedBox(height: 12),
-                              // SizedBox(
-                              //   height: 170,
-                              //   child: ListView.builder(
-                              //     scrollDirection: Axis.horizontal,
-                              //     itemCount: state.item.item.,
-                              //     itemBuilder: (context, index) {
-                              //       final item = items[index];
-                              //       return Container(
-                              //         width: 140,
-                              //         margin: const EdgeInsets.only(right: 12),
-                              //         decoration: BoxDecoration(
-                              //           color: Colors.grey[200],
-                              //           borderRadius: BorderRadius.circular(12),
-                              //         ),
-                              //         child: Column(
-                              //           crossAxisAlignment:
-                              //               CrossAxisAlignment.start,
-                              //           children: [
-                              //             ClipRRect(
-                              //               borderRadius:
-                              //                   const BorderRadius.vertical(
-                              //                       top: Radius.circular(12)),
-                              //               child: Image.network(
-                              //                 getValidImageUrl(
-                              //                     state.room.room!.imageUrl!),
-                              //                 height: 80,
-                              //                 width: double.infinity,
-                              //                 fit: BoxFit.cover,
-                              //               ),
-                              //             ),
-                              //             Padding(
-                              //               padding: const EdgeInsets.all(8.0),
-                              //               child: Column(
-                              //                 crossAxisAlignment:
-                              //                     CrossAxisAlignment.start,
-                              //                 children: [
-                              //                   Text(
-                              //                     items[index].name!,
-                              //                     style: const TextStyle(
-                              //                       fontWeight: FontWeight.bold,
-                              //                       fontFamily:
-                              //                           'Times New Roman',
-                              //                     ),
-                              //                     maxLines: 1,
-                              //                     overflow:
-                              //                         TextOverflow.ellipsis,
-                              //                   ),
-                              //                   const SizedBox(height: 4),
-                              //                   Text(
-                              //                     '\//$${item.price}',
-                              //                     style: const TextStyle(
-                              //                       fontFamily:
-                              //                           'Times New Roman',
-                              //                       color: Colors.black87,
-                              //                     ),
-                              //                   ),
-                              //                 ],
-                              //               ),
-                              //             ),
-                              //           ],
-                              //         ),
-                              //       );
-                              //     },
-                              //   ),
-                              // ),
+                              WoodDetailsWidget(
+                                woodColor: state.item.item!.woodColor,
+                                woodHeight:
+                                    state.item.itemDetails!.first.woodHeight,
+                                woodLength:
+                                    state.item.itemDetails!.first.woodLength,
+                                woodType: state.item.item!.woodType,
+                                woodWidth:
+                                    state.item.itemDetails!.first.woodWidth,
+                              ),
+                              const SizedBox(height: 24),
+                              FabricDetailsWidget(
+                                  fabricLength: state
+                                      .item.itemDetails!.first.fabricDimension,
+                                  fabricType: state.item.item!.fabricType,
+                                  fabricColor: state.item.item!.fabricColor),
+
                               const SizedBox(height: 24),
                               // Feedback (Comments) Section.
                               if (feedbacks.isNotEmpty) ...[
-                                const Text(
-                                  'Feedback',
+                                Text(
+                                  AppLocalizations.of(context)!.feedback,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Times New Roman',
@@ -358,7 +268,6 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                     color: Colors.black87,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
                                 ListView.separated(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
@@ -371,28 +280,32 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        // CircleAvatar(
-                                        //   backgroundImage: NetworkImage(
-                                        //       getValidImageUrl(
-                                        //           feedback.profilePic)),
-                                        //   radius: 18,
-                                        // ),
-                                        // const SizedBox(width: 12),
+                                        CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                              getValidImageUrl(feedback
+                                                      .customer!.imageUrl ??
+                                                  'http://profile.unknown.com')),
+                                          radius: 18,
+                                        ),
+                                        const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              // Text(
-                                              //   feedback.userName,
-                                              //   style: const TextStyle(
-                                              //     fontWeight: FontWeight.bold,
-                                              //     fontFamily: 'Times New Roman',
-                                              //   ),
-                                              // ),
+                                              Text(
+                                                feedback.customer!.name ??
+                                                    'Unknown',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Times New Roman',
+                                                ),
+                                              ),
+                                              _buildRatingStars(feedback.rate!),
                                               const SizedBox(height: 4),
                                               Text(
-                                                feedback,
+                                                feedback.feedback ??
+                                                    'Nothing to say',
                                                 style: TextStyle(
                                                   fontFamily: 'Times New Roman',
                                                   fontSize: 14,
@@ -414,7 +327,7 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    state.item.item!.price.toString(),
+                                    '\$${state.item.item!.price.toString()}',
                                     style: TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.bold,
@@ -431,8 +344,8 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                     },
                                     icon: const Icon(Icons.shopping_cart,
                                         color: Colors.white),
-                                    label: const Text(
-                                      'Add to Cart',
+                                    label: Text(
+                                      AppLocalizations.of(context)!.addtocart,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontFamily: 'Times New Roman',

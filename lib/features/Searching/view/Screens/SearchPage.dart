@@ -8,6 +8,7 @@ import 'package:start/features/Cart/Bloc/CartBloc/cart_bloc.dart';
 import 'package:start/features/ProductsFolder/view/Screens/ItemDetailesPage.dart';
 import 'package:start/features/Searching/Bloc/bloc/search_res_bloc.dart';
 import 'package:start/features/Searching/view/Widgets/searchResultWidget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SearchPage extends StatefulWidget {
   static const String routeName = '/search_screen';
@@ -59,8 +60,8 @@ class _SearchPageState extends State<SearchPage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
-            "What are you looking for?",
+          title: Text(
+            AppLocalizations.of(context)!.whatlook,
             style: TextStyle(
               fontSize: 18,
               fontFamily: 'Serif',
@@ -122,8 +123,8 @@ class _SearchPageState extends State<SearchPage> {
                             color: Colors.black87,
                             fontSize: 18,
                             fontFamily: 'Serif'),
-                        decoration: const InputDecoration(
-                          hintText: "Search items...",
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context)!.search,
                           hintStyle: TextStyle(color: Colors.black45),
                           border: InputBorder.none,
                           prefixIcon: Icon(
@@ -146,9 +147,9 @@ class _SearchPageState extends State<SearchPage> {
                     } else if (state is SearchSuccess) {
                       final results = state.results.items;
                       if (results == null || results.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Text(
-                            'No items found',
+                            AppLocalizations.of(context)!.noitemsfound,
                             style:
                                 TextStyle(fontSize: 16, color: Colors.black54),
                           ),
@@ -192,9 +193,9 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                       );
                     } else if (state is SearchError) {
-                      return const Center(
+                      return Center(
                         child: Text(
-                          'An error occurred',
+                          AppLocalizations.of(context)!.anerrorocc,
                           style: TextStyle(fontSize: 16, color: Colors.red),
                         ),
                       );

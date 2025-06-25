@@ -4,6 +4,7 @@ import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/features/Auth/Bloc/LoginBloc/login_bloc.dart';
 import 'package:start/features/Auth/View/Screens/SignUpPage.dart';
 import 'package:start/features/home/view/Screens/Home.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   static const String routeName = '/login';
@@ -26,20 +27,21 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: const Color(0xFFF4F0EB),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SingleChildScrollView(
               child: Column(
                 //Text(AppLocalizations.of(context)!.welcome);
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.asset(
-                    'assets/login_dec.png',
-                    height: 100,
+                  Center(
+                    child: Image.asset(
+                      'assets/login_dec.png',
+                      height: 270,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  const SizedBox(height: 100),
-                  const Text(
-                    'LOGIN',
+
+                  Text(
+                    AppLocalizations.of(context)!.login,
                     style: TextStyle(
                       fontFamily: 'Times New Roman',
                       fontSize: 40,
@@ -49,8 +51,8 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 30),
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.email,
                       labelStyle: TextStyle(color: Color(0xFFC9C7C5)),
                       filled: true,
                       fillColor: Colors.white,
@@ -83,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: AppLocalizations.of(context)!.password,
                       labelStyle: const TextStyle(color: Color(0xFFC9C7C5)),
                       filled: true,
                       fillColor: Colors.white,
@@ -118,14 +120,14 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.black,
                       ),
-                      child: const Text(
-                        'Forget Password?',
+                      child: Text(
+                        AppLocalizations.of(context)!.forgetpassword,
                         style: TextStyle(fontFamily: 'Times New Roman'),
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 70),
                   BlocConsumer<LoginBloc, LoginState>(
                     listener: (context, state) {
                       if (state is LoginError) {
@@ -139,9 +141,9 @@ class _LoginPageState extends State<LoginPage> {
                             });
                       } else if (state is LoginSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Login Successfully!',
+                              AppLocalizations.of(context)!.loginsucc,
                             ),
                             backgroundColor: Colors.green,
                           ),
@@ -171,7 +173,7 @@ class _LoginPageState extends State<LoginPage> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               )
                             : Text(
-                                'Login',
+                                AppLocalizations.of(context)!.login,
                                 style: TextStyle(
                                   fontFamily: 'Times New Roman',
                                   fontSize: 14,
@@ -195,8 +197,8 @@ class _LoginPageState extends State<LoginPage> {
                       Navigator.of(context)
                           .pushReplacementNamed(SignUpPage.routeName);
                     },
-                    child: const Text(
-                      'New User?    Sign Up',
+                    child: Text(
+                      AppLocalizations.of(context)!.newuser,
                       style: TextStyle(fontFamily: 'Times New Roman'),
                     ),
                   ),

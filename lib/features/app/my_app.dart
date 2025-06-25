@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:start/config/routes/app_router.dart';
 import 'package:start/core/managers/theme_manager.dart';
 import 'package:start/features/Auth/View/Screens/Araak_Splash_Screen.dart';
@@ -26,6 +27,7 @@ class _MainAppState extends State<MainApp> {
       child: BlocBuilder<LacalizationCubit, LacalizationState>(
         builder: (context, state) {
           return MaterialApp(
+            builder: EasyLoading.init(),
             home: AraakSplashScreen(),
             title: 'APP',
             navigatorKey: navigatorKey,

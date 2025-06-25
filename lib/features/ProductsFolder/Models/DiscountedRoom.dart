@@ -3,8 +3,8 @@ class DiscountModel {
     String? discountPercentage;
     String? startDate;
     String? endDate;
-    String? originalPrice;
-    String? discountedPrice;
+    num? originalPrice;
+    num? discountedPrice;
     int? roomId;
     String? roomName;
     String? roomImage;
@@ -53,7 +53,7 @@ class DiscountModel {
 class RoomItems {
     int? id;
     String? name;
-    String? price;
+    num? price;
     String? imageUrl;
 
     RoomItems({this.id, this.name, this.price, this.imageUrl});

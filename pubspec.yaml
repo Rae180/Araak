@@ -34,7 +34,15 @@ dependencies:
   latlong2: ^0.9.1
   flutter_map: ^7.0.2
   flutter_map_dragmarker: ^7.0.0
+  geolocator: ^8.2.1
+  flutter_stripe: 10.2.0
+  flutter_easyloading: ^3.0.5
   #assets_audio_player: ^3.0.8
+
+dependency_overrides:
+  stripe_platform_interface: 10.2.0
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

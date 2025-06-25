@@ -9,6 +9,7 @@ import 'package:start/features/Auth/Bloc/SignupBloc/sign_up_bloc.dart';
 import 'package:start/features/Auth/Models/User.dart';
 import 'package:start/features/Auth/View/Screens/LoginPage.dart';
 import 'package:start/features/home/view/Screens/Home.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SignUpPage extends StatefulWidget {
   static const String routeName = '/signup_screen';
@@ -39,7 +40,7 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text("Gallery"),
+                title: Text(AppLocalizations.of(context)!.gallery),
                 onTap: () async {
                   Navigator.of(ctx).pop(); // Close the bottom sheet
                   await _pickImage(ImageSource.gallery);
@@ -47,7 +48,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text("Camera"),
+                title: Text(AppLocalizations.of(context)!.camera),
                 onTap: () async {
                   Navigator.of(ctx).pop(); // Close the bottom sheet
                   await _pickImage(ImageSource.camera);
@@ -173,7 +174,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           controller: _nameController,
                           cursorColor: Colors.grey,
                           decoration: InputDecoration(
-                            labelText: 'Name',
+                            labelText: AppLocalizations.of(context)!.name,
                             labelStyle: TextStyle(
                               color: Colors.black,
                               fontSize: 14.0,
@@ -200,7 +201,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           controller: _emailController,
                           cursorColor: Colors.grey,
                           decoration: InputDecoration(
-                            labelText: 'Email',
+                            labelText: AppLocalizations.of(context)!.email,
                             labelStyle: TextStyle(
                               color: Colors.black,
                               fontSize: 14.0,
@@ -227,7 +228,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           controller: _phoneNumController,
                           cursorColor: Colors.grey,
                           decoration: InputDecoration(
-                            labelText: 'phone number',
+                            labelText: AppLocalizations.of(context)!.phonenum,
                             labelStyle: TextStyle(
                               color: Colors.black,
                               fontSize: 14.0,
@@ -267,7 +268,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                     : Icons.visibility_off,
                               ),
                             ),
-                            labelText: 'Password',
+                            labelText: AppLocalizations.of(context)!.password,
                             labelStyle: TextStyle(
                               color: Colors.black,
                               fontSize: 14.0,
@@ -308,7 +309,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                     : Icons.visibility_off,
                               ),
                             ),
-                            labelText: 'confirm password',
+                            labelText:
+                                AppLocalizations.of(context)!.confirmpass,
                             labelStyle: TextStyle(
                               color: Colors.black,
                               fontSize: 14.0,
@@ -344,9 +346,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                   });
                             } else if (state is SignupSuccess) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Sign up Successfully!',
+                                    AppLocalizations.of(context)!.signupsuccess,
                                   ),
                                   backgroundColor: Colors.green,
                                 ),
@@ -384,7 +386,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                           Colors.white),
                                     )
                                   : Text(
-                                      'Sign Up',
+                                      AppLocalizations.of(context)!.signup,
                                       style: TextStyle(
                                         fontSize: 14.0,
                                         fontFamily: 'Times New Roman',
@@ -407,7 +409,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Already have an account? ",
+                        AppLocalizations.of(context)!.haveanaccount,
                         style: TextStyle(
                           fontSize: 14.0,
                           fontFamily: 'Times New Roman',
@@ -419,7 +421,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               .pushReplacementNamed(LoginPage.routeName);
                         },
                         child: Text(
-                          "Log in",
+                          AppLocalizations.of(context)!.login,
                           style: TextStyle(
                               fontFamily: 'Times New Roman',
                               fontSize: 14.0,

@@ -29,7 +29,7 @@ class Items {
   int? id;
   int? roomId;
   String? name;
-  int? time;
+  String? time;
   num? price;
   String? imageUrl;
   int? count;
@@ -105,7 +105,7 @@ class Rooms {
   int? categoryId;
   String? imageUrl;
   int? countReserved;
-  int? time;
+  String? time;
   num? price;
   int? count;
   String? createdAt;

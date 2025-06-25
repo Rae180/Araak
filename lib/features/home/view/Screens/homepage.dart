@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
-import 'package:start/features/Favoritse/Bloc/FavBloc/fav_bloc.dart';
 import 'package:start/features/ProductsFolder/view/Screens/DiscountDetailesPage.dart';
 import 'package:start/features/ProductsFolder/view/Screens/ItemDetailesPage.dart';
 import 'package:start/features/ProductsFolder/view/Screens/ProductDetails.dart';
 import 'package:start/features/Searching/view/Screens/SearchPage.dart';
+import 'package:start/features/Settings/view/Screens/SettingsPage.dart';
 import 'package:start/features/home/Bloc/CategoryBloc/category_bloc.dart';
 import 'package:start/features/home/Bloc/RecommendBloc/recommend_bloc.dart';
 import 'package:start/features/home/Bloc/RoomsByCategoryBloc/rooms_by_category_bloc.dart';
@@ -20,6 +20,7 @@ import 'package:start/features/home/view/widgets/RecommendedItems.dart';
 import 'package:start/features/home/view/widgets/RecommendedRooms.dart';
 import 'package:start/features/home/view/widgets/TrendingItemWidget.dart';
 import 'package:start/features/home/view/widgets/TrendingRoomWidget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   static const String routeName = '/homepage';
@@ -80,7 +81,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pushNamed(SettingScreen.routeName);
+              },
               icon: Icon(
                 Icons.settings_outlined,
                 color: Colors.black,
@@ -94,10 +97,10 @@ class _HomePageState extends State<HomePage> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 8, horizontal: 7),
                 child: Text(
-                  "🔥 Trending & Discounts",
+                  AppLocalizations.of(context)!.trending,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -114,15 +117,16 @@ class _HomePageState extends State<HomePage> {
                         child: CircularProgressIndicator(),
                       );
                     } else if (state is TrendingSuccess) {
-                      print('success');
                       final trendingItems = state.trending.trendingItems ?? [];
                       final trendingRooms = state.trending.trendingRooms ?? [];
-                      final discounts = state.trending.discounts ?? [];
+                      final itemdiscounts = state.trending.itemDiscounts ?? [];
+                      final roomsdiscounts = state.trending.roomDiscounts ?? [];
 
                       final List<dynamic> combinedList = [];
                       combinedList.addAll(trendingItems);
                       combinedList.addAll(trendingRooms);
-                      combinedList.addAll(discounts);
+                      combinedList.addAll(itemdiscounts);
+                      combinedList.addAll(roomsdiscounts);
                       // print('combinedList : $combinedList');
 
                       return ListView.builder(
@@ -132,7 +136,6 @@ class _HomePageState extends State<HomePage> {
                         itemBuilder: ((context, index) {
                           final item = combinedList[index];
                           if (item is TrendingItems) {
-                            print('trending items');
                             return TrendingItemWidget(
                               item: item,
                               onTap: () {
@@ -144,7 +147,6 @@ class _HomePageState extends State<HomePage> {
                             );
                           }
                           if (item is TrendingRooms) {
-                            print('trending rooms');
                             return TrendingRoomWidget(
                               item: item,
                               onTap: () {
@@ -155,7 +157,21 @@ class _HomePageState extends State<HomePage> {
                               },
                             );
                           }
-                          if (item is Discounts) {
+                          if (item is ItemDiscounts) {
+                            return DiscountWidget(
+                                onTap: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => DiscountDetailsPage(
+                                            discountId: item.id,
+                                          )));
+                                },
+                                imageUrl: item.imageUrl!,
+                                discountPercentage: item.discountPercentage!,
+                                endDate: item.endDate!,
+                                originalPrice: item.originalPrice!,
+                                discountedPrice: item.discountedPrice!);
+                          }
+                          if (item is RoomDiscounts) {
                             return DiscountWidget(
                                 onTap: () {
                                   Navigator.of(context).push(MaterialPageRoute(
@@ -183,10 +199,10 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 20),
 
               // 🎯 Suggested For You Section (Horizontal Scroll)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 8, horizontal: 7),
                 child: Text(
-                  "🎯 Suggested For You",
+                  AppLocalizations.of(context)!.suggest,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -253,10 +269,10 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 20),
 
               // 📦 View All Items Section with Category Tabs
-              const Padding(
+               Padding(
                 padding: EdgeInsets.symmetric(vertical: 8, horizontal: 7),
                 child: Text(
-                  "📦 View All Items",
+                  AppLocalizations.of(context)!.viewall,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -357,7 +373,7 @@ class _HomePageState extends State<HomePage> {
                           },
                           child: ProductCard(
                             roomId: product.id!,
-                            price: '${100}\$',
+                            price: '${product.price ?? 0}\$',
                             name: product.name!,
                             likecount: product.likesCount!,
                             rating: product.averageRating!,
@@ -393,8 +409,8 @@ class _HomePageState extends State<HomePage> {
                             roomId: product.id!,
                             price: '${product.price}\$',
                             name: product.name!,
-                            likecount: 2,
-                            rating: 3.2,
+                            likecount: product.likeCount!,
+                            rating: product.averageRating!,
                             imageUrl: product.imageUrl!,
                           ),
                         );

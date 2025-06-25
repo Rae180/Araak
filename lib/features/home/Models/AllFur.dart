@@ -21,12 +21,14 @@ class AllRooms {
     int? id;
     String? name;
     int? time;
-    int? price;
+    num? price;
     String? description;
     String? imageUrl;
+    int? likeCount;
+    num? averageRating;
     List<dynamic>? items;
 
-    AllRooms({this.id, this.name, this.time, this.price, this.description, this.imageUrl, this.items});
+    AllRooms({this.id, this.name, this.time, this.price, this.description, this.imageUrl, this.likeCount, this.averageRating, this.items});
 
     AllRooms.fromJson(Map<String, dynamic> json) {
         id = json["id"];
@@ -35,6 +37,8 @@ class AllRooms {
         price = json["price"];
         description = json["description"];
         imageUrl = json["image_url"];
+        likeCount = json["like_count"];
+        averageRating = json["average_rating"];
         items = json["items"] ?? [];
     }
 
@@ -46,6 +50,8 @@ class AllRooms {
         _data["price"] = price;
         _data["description"] = description;
         _data["image_url"] = imageUrl;
+        _data["like_count"] = likeCount;
+        _data["average_rating"] = averageRating;
         if(items != null) {
             _data["items"] = items;
         }

@@ -1,3 +1,18 @@
+// android/build.gradle
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Android Gradle Plugin 8.x+
+        classpath 'com.android.tools.build:gradle:8.0.2'
+        // Kotlin Gradle plugin 1.8.x+
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0"
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -5,11 +20,12 @@ allprojects {
     }
 }
 
+// keep your generated build outputs in the Flutter top‑level /build folder
 rootProject.buildDir = '../build'
+
+// move each module’s build folder underneath that
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
     project.evaluationDependsOn(':app')
 }
 

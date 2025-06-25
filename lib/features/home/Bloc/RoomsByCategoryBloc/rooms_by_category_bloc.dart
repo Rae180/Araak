@@ -30,6 +30,7 @@ class RoomsByCategoryBloc
     });
 
     on<GetAllFurEvent>(((event, emit) async {
+      emit(RoomsByCategoryLoading());
       final result = await BaseRepo.repoRequest(request: () async {
         final response = await client.getRequest(url: ApiConstants.showAllFur);
         final furr = AllFur.fromJson(response);

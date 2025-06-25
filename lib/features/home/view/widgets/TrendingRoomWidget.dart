@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:start/core/constants/api_constants.dart';
 import 'package:start/features/home/Models/Trending.dart';
 
 class TrendingRoomWidget extends StatelessWidget {
   final TrendingRooms item;
   final VoidCallback onTap;
-  const TrendingRoomWidget({super.key, required this.item,required this.onTap});
+  const TrendingRoomWidget(
+      {super.key, required this.item, required this.onTap});
 
   String getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
@@ -89,9 +91,9 @@ class TrendingRoomWidget extends StatelessWidget {
               ),
               // Product name overlay
               Positioned(
-                bottom: 10,
+                bottom: 70,
                 left: 15,
-                // right: 15,
+                right: 15,
                 child: Text(
                   item.name ?? '',
                   style: const TextStyle(
@@ -105,29 +107,29 @@ class TrendingRoomWidget extends StatelessWidget {
                 ),
               ),
               // Price badge
-              // Positioned(
-              //   bottom: 10,
-              //   left: 15,
-              //   child: Container(
-              //     padding:
-              //         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              //     decoration: BoxDecoration(
-              //       gradient: LinearGradient(
-              //         colors: [Colors.deepOrange, Colors.redAccent],
-              //       ),
-              //       borderRadius: BorderRadius.circular(12),
-              //     ),
-              //     child: Text(
-              //       NumberFormat.currency(locale: "en_US", symbol: "\$")
-              //           .format(item.price ?? 0),
-              //       style: const TextStyle(
-              //           fontSize: 16,
-              //           fontWeight: FontWeight.bold,
-              //           color: Colors.white),
-              //     ),
-              //   ),
-              // ),
-              // Like button with animation
+              Positioned(
+                bottom: 10,
+                left: 15,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.deepOrange, Colors.redAccent],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    NumberFormat.currency(locale: "en_US", symbol: "\$")
+                        .format(item.price ?? 0),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                ),
+              ),
+              //Like button with animation
               Positioned(
                 bottom: 10,
                 right: 15,
