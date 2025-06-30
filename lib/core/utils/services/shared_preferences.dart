@@ -57,14 +57,14 @@ class PreferenceUtils {
     return _prefsInstance.setString(key, json.encode(value));
   }
 
-  static dynamic  getObject(String key)  {
+  static dynamic getObject(String key) {
     var string = _prefsInstance.getString(key);
     if (string == null) {
       return null;
     }
 
-    final decodedJson =json.decode(string) as dynamic;
-    
+    final decodedJson = json.decode(string) as dynamic;
+
     return decodedJson;
   }
 
@@ -76,5 +76,15 @@ class PreferenceUtils {
 
   static Future<bool> clearAll() async {
     return await _prefsInstance.clear();
+  }
+
+  static Future<void> saveTheme(String theme) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme', theme);
+  }
+
+  static Future<String?> getTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('theme');
   }
 }

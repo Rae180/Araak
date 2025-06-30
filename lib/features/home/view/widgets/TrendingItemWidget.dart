@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:start/core/constants/app_constants.dart';
 import 'package:start/core/constants/api_constants.dart';
+import 'package:start/core/mixin/hover_mixin.dart';
 import 'package:start/features/home/Models/Trending.dart';
-import 'package:intl/intl.dart';
 
-class TrendingItemWidget extends StatelessWidget {
+class TrendingItemWidget extends StatefulWidget {
   final TrendingItems item;
   final VoidCallback onTap;
-  const TrendingItemWidget({Key? key, required this.item, required this.onTap})
-      : super(key: key);
+  const TrendingItemWidget({super.key, required this.item, required this.onTap});
 
+  @override
+  State<TrendingItemWidget> createState() => _TrendingItemWidgetState();
+}
+
+class _TrendingItemWidgetState extends State<TrendingItemWidget> with HoverMixin {
   String getValidImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
     if (imageUrl.contains("localhost")) {
@@ -19,143 +25,164 @@ class TrendingItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String validUrl = getValidImageUrl(item.imageUrl);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 230, // Slightly larger for more emphasis.
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 8,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
-              // Background Image
-              SizedBox(
-                height: 270, // Full-height trending look.
-                width: double.infinity,
-                child: Image.network(
-                  validUrl,
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.secondary;
+    final validUrl = getValidImageUrl(widget.item.imageUrl);
+    
+    return buildHoverable(
+      scale: 1.04,
+      translate: -8.0,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          width: 230,
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppConstants.elementSpacing,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isHovered ? 0.25 : 0.15),
+                blurRadius: 12,
+                spreadRadius: 3,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+            child: Stack(
+              children: [
+                // Product image
+                CachedNetworkImage(
+                  imageUrl: validUrl,
+                  height: 270,
+                  width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Center(child: Icon(Icons.error)),
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey.shade300,
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Center(child: Icon(Icons.error_outline)),
+                  ),
                 ),
-              ),
-              // Blurred Overlay Effect
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.black.withOpacity(0.55),
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.25),
-                      ],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
+                
+                // Bottom gradient overlay
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 100,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.8),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // "Trending Now" Badge
-              Positioned(
-                top: 10,
-                left: 12,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.orangeAccent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    "🔥 Trending Now",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'Times New Roman',
+                
+                // "Trending" badge
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrange,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      "Trending",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: AppConstants.primaryFont,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // Product name overlay
-              Positioned(
-                bottom: 70,
-                left: 15,
-                right: 15,
-                child: Text(
-                  item.name ?? '',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontFamily: 'Times New Roman'),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-              // Price badge
-              Positioned(
-                bottom: 10,
-                left: 15,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.deepOrange, Colors.redAccent],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    NumberFormat.currency(locale: "en_US", symbol: "\$")
-                        .format(item.price ?? 0),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'Times New Roman',
-                    ),
-                  ),
-                ),
-              ),
-              // Like button with animation
-              Positioned(
-                bottom: 10,
-                right: 15,
-                child: GestureDetector(
-                  onTap: () {
-                    // TODO: Implement like functionality.
-                  },
-                  child: Row(
+                
+                // Product information
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.favorite, size: 22, color: Colors.red),
-                      const SizedBox(width: 4),
+                      // Product name
                       Text(
-                        "${item.likesCount ?? 0}",
+                        widget.item.name ?? '',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          fontFamily: 'Times New Roman',
+                          fontFamily: AppConstants.primaryFont,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      // Price and likes
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Price
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.deepOrange.shade400,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              "\$${widget.item.price?.toStringAsFixed(2) ?? '0.00'}",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontFamily: AppConstants.primaryFont,
+                              ),
+                            ),
+                          ),
+                          
+                          // Likes
+                          Row(
+                            children: [
+                              const Icon(Icons.favorite, size: 20, color: Colors.red),
+                              const SizedBox(width: 4),
+                              Text(
+                                "${widget.item.likesCount ?? 0}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

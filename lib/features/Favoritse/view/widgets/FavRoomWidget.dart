@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:start/core/constants/app_constants.dart';
+import 'package:start/core/managers/theme_manager.dart';
 
-class FavRoomWidget extends StatelessWidget {
+class FavRoomWidget extends StatefulWidget {
   final String imageUrl;
   final String name;
   final num price;
@@ -22,100 +24,168 @@ class FavRoomWidget extends StatelessWidget {
     required this.averagRating,
   }) : super(key: key);
 
-  // Helper method returns a Row with five star icons, each partially or fully filled.
-  Widget _buildRatingStars(num rating) {
-    List<Widget> stars = [];
-    for (int i = 0; i < 5; i++) {
-      num fill = 0.0;
-      if (rating >= i + 1) {
-        fill = 1.0;
-      } else if (rating > i && rating < i + 1) {
-        fill = rating - i;
-      } else {
-        fill = 0.0;
-      }
-      stars.add(_StarIcon(ratingFraction: fill));
+  @override
+  State<FavRoomWidget> createState() => _FavRoomWidgetState();
+}
+
+class _FavRoomWidgetState extends State<FavRoomWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _bookmarkController;
+  late Animation<double> _bookmarkAnimation;
+  bool _isBookmarkAnimating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookmarkController = AnimationController(
+      duration: AppConstants.hoverDuration,
+      vsync: this,
+    );
+    _bookmarkAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 0.9), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 30),
+    ]).animate(_bookmarkController);
+  }
+
+  @override
+  void dispose() {
+    _bookmarkController.dispose();
+    super.dispose();
+  }
+
+  void _handleBookmarkTap() {
+    if (!_isBookmarkAnimating) {
+      _isBookmarkAnimating = true;
+      _bookmarkController.forward().then((_) {
+        widget.onTap();
+        _isBookmarkAnimating = false;
+      });
     }
-    return Row(children: stars);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return InkWell(
-      onTap: details,
-      borderRadius: BorderRadius.circular(16),
+      onTap: widget.details,
+      borderRadius: BorderRadius.circular(AppConstants.cardRadius),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(vertical: AppConstants.elementSpacing / 2),
+        padding: const EdgeInsets.all(AppConstants.elementSpacing),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          // Subtle drop shadow for a modern, elevated look.
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
           boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade300,
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
+            if (!isDarkMode)
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
           ],
+          border: isDarkMode
+              ? Border.all(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                )
+              : null,
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image thumbnail with rounded corners.
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
+            // Image with Hero animation
+            Hero(
+              tag: 'room-image-${widget.name}',
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                  color: colorScheme.surfaceVariant,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                  child: Image.network(
+                    widget.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: colorScheme.primary,
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
+            
             const SizedBox(width: 16),
-            // Item details: name, price, rating, and like count.
+            
+            // Content area
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Name text.
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  // Title and price
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "\$${widget.price.toStringAsFixed(2)}",
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  // Price text.
-                  Text(
-                    "\$${price.toStringAsFixed(2)}",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Row containing dynamic star rating and likes count.
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Rating and likes
                   Row(
                     children: [
-                      _buildRatingStars(averagRating),
-                      const SizedBox(width: 8),
+                      _buildRatingStars(widget.averagRating, colorScheme),
+                      const SizedBox(width: 16),
                       Row(
                         children: [
-                             
-                          const Icon(Icons.favorite, color: Colors.red, size: 16),
+                          Icon(
+                            Icons.favorite,
+                            color: Colors.red.shade300,
+                            size: 18,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            likecount.toString(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
+                            widget.likecount.toString(),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -125,22 +195,42 @@ class FavRoomWidget extends StatelessWidget {
                 ],
               ),
             ),
-            // Two icon buttons on the right: filled bookmark and unfilled cart.
+            
+            // Action buttons
             Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.bookmark),
-                  color: Colors.deepOrangeAccent,
-                  iconSize: 28,
+                // Bookmark with animation
+                AnimatedBuilder(
+                  animation: _bookmarkAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _bookmarkAnimation.value,
+                      child: child,
+                    );
+                  },
+                  child: IconButton(
+                    onPressed: _handleBookmarkTap,
+                    icon: const Icon(Icons.bookmark, size: 24),
+                    color: colorScheme.primary,
+                    tooltip: 'Remove bookmark',
+                  ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: onTap2,
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  color: Colors.grey.shade600,
-                  iconSize: 28,
+                
+                const SizedBox(height: 16),
+                
+                // Add to cart button
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colorScheme.primary.withOpacity(0.1),
+                  ),
+                  child: IconButton(
+                    onPressed: widget.onTap2,
+                    icon: Icon(Icons.shopping_cart_outlined, size: 22),
+                    color: colorScheme.primary,
+                    tooltip: 'Add to cart',
+                  ),
                 ),
               ],
             ),
@@ -149,47 +239,16 @@ class FavRoomWidget extends StatelessWidget {
       ),
     );
   }
-}
 
-// A helper widget that draws a single star icon filled according to the fraction.
-class _StarIcon extends StatelessWidget {
-  final num ratingFraction; // A value between 0.0 (empty) and 1.0 (full).
-const _StarIcon({Key? key, required this.ratingFraction}) : super(key: key);
-  
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Icon(
-          Icons.star_border,
+  Widget _buildRatingStars(num rating, ColorScheme colorScheme) {
+    return Row(
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating ? Icons.star : Icons.star_border,
           color: Colors.amber,
-          size: 20,
-        ),
-        ClipRect(
-          clipper: _StarClipper(rating: ratingFraction),
-          child: const Icon(
-            Icons.star,
-            color: Colors.amber,
-            size: 20,
-          ),
-        ),
-      ],
+          size: 18,
+        );
+      }),
     );
-  }
-}
-
-// Custom clipper to clip the star based on the rating fraction.
-class _StarClipper extends CustomClipper<Rect> {
-  final num rating; // 0.0 to 1.0
-_StarClipper({required this.rating});
-  
-  @override
-  Rect getClip(Size size) {
-    return Rect.fromLTRB(0, 0, size.width * rating, size.height);
-}
-  
-  @override
-  bool shouldReclip(covariant _StarClipper oldClipper) {
-    return oldClipper.rating != rating;
   }
 }

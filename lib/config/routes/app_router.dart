@@ -4,6 +4,7 @@ import 'package:start/features/Auth/View/Screens/LoginPage.dart';
 import 'package:start/features/Auth/View/Screens/SignUpPage.dart';
 import 'package:start/features/Auth/View/Screens/Araak_Splash_Screen.dart';
 import 'package:start/features/Auth/View/Screens/WelcomeScreen.dart';
+import 'package:start/features/Auth/View/Screens/forgetpaassScreen.dart';
 import 'package:start/features/Cart/view/Screens/CartScreen.dart';
 import 'package:start/features/Cart/view/Screens/MapPickerScreen.dart';
 import 'package:start/features/Customizations/view/Screens/CustomizationsPage.dart';
@@ -61,6 +62,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (context) => ProfilePage());
         case ModAccount.routeName:
         return MaterialPageRoute(builder: (context) => ModAccount());
+        case ForgotPasswordScreen.routeName:
+        return MaterialPageRoute(builder: (context) => ForgotPasswordScreen());
       default:
         return unDefinedRoute();
     }

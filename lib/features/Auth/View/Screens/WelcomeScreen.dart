@@ -212,6 +212,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // Global background gradient using your specified Color(0xFFF4F0EB)
       body: Container(
         decoration: const BoxDecoration(

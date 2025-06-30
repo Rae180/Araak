@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:like_button/like_button.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/core/constants/api_constants.dart';
+import 'package:start/core/constants/app_constants.dart';
+import 'package:start/core/managers/theme_manager.dart';
 import 'package:start/features/Cart/Bloc/CartBloc/cart_bloc.dart';
 import 'package:start/features/Favoritse/Bloc/FavBloc/fav_bloc.dart';
 import 'package:start/features/ProductsFolder/Bloc/DiscountsBloc/discounts_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DiscountDetailsPage extends StatefulWidget {
   static const String routeName = '/discount_details';
@@ -26,6 +31,11 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -40,58 +50,99 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
         ),
       ],
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         body: BlocBuilder<DiscountsBloc, DiscountsState>(
           builder: (context, state) {
             if (state is DiscountsLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(
+                  color: colorScheme.primary,
+                ),
+              );
+            } else if (state is DiscountsError) {
+              return Center(
+                child: Text(
+                  state.message,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                ),
+              );
             } else if (state is DiscountsDetailesSuccess) {
               final discount = state.discount;
               final includedItems = discount.roomItems ?? [];
+
               return Stack(
                 children: [
-                  // Top Image Section.
-                  Container(
-                    height: MediaQuery.of(context).size.height * 0.45,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          getValidImageUrl(discount.roomImage),
+                  // Top Image Section with Hero animation
+                  Hero(
+                    tag: 'discount-${discount.roomId}',
+                    child: CachedNetworkImage(
+                      imageUrl: getValidImageUrl(discount.roomImage),
+                      imageBuilder: (context, imageProvider) => Container(
+                        height: MediaQuery.of(context).size.height * 0.45,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        fit: BoxFit.contain,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                isDarkMode
+                                    ? Colors.black.withOpacity(0.7)
+                                    : Colors.white.withOpacity(0.7),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.3),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                      placeholder: (context, url) => Container(
+                        height: MediaQuery.of(context).size.height * 0.45,
+                        color: colorScheme.surfaceVariant,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: MediaQuery.of(context).size.height * 0.45,
+                        color: colorScheme.surfaceVariant,
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: colorScheme.onSurfaceVariant,
+                          size: 48,
                         ),
                       ),
                     ),
                   ),
-                  // Draggable Details Sheet.
+
+                  // Draggable Details Sheet
                   DraggableScrollableSheet(
                     initialChildSize: 0.55,
                     minChildSize: 0.55,
-                    maxChildSize: 1.0,
+                    maxChildSize: 0.9,
                     builder: (context, scrollController) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 24),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(30)),
+                          horizontal: AppConstants.sectionPadding,
+                          vertical: 24,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(30)),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 10,
-                              offset: Offset(0, -2),
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 20,
+                              spreadRadius: 5,
                             )
                           ],
                         ),
@@ -101,7 +152,7 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Top Section: Room name and bookmark button.
+                              // Top Section: Room name and bookmark button
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -109,209 +160,225 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                                   Expanded(
                                     child: Text(
                                       discount.roomName ?? '',
-                                      style: const TextStyle(
-                                        fontFamily: 'Times New Roman',
-                                        fontSize: 24,
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
                                       ),
                                       overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
                                     ),
+                                  ),
+                                  BlocBuilder<FavBloc, FavState>(
+                                    builder: (context, favState) {
+                                      final isFavorite =
+                                          false; // Add if discount has isFavorite property
+                                      return LikeButton(
+                                        size: 28,
+                                        isLiked: isFavorite,
+                                        onTap: (isLiked) async {
+                                          // Add favorite logic here
+                                          return !isLiked;
+                                        },
+                                        likeBuilder: (bool isLiked) {
+                                          return Icon(
+                                            isLiked
+                                                ? Icons.bookmark
+                                                : Icons
+                                                    .bookmark_border_outlined,
+                                            color: isLiked
+                                                ? Colors.amber
+                                                : colorScheme.onSurface
+                                                    .withOpacity(0.7),
+                                            size: 28,
+                                          );
+                                        },
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              // Discount Information: Percentage, Start Date, End Date.
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.redAccent,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      "${discount.discountPercentage}% OFF",
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontFamily: 'Times New Roman',
+
+                              // Discount Information
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(
+                                      AppConstants.cardRadius),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primary,
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Start: ${discount.startDate}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54,
-                                          fontFamily: 'Times New Roman',
+                                      child: Text(
+                                        "${discount.discountPercentage}% ${'l10n.off'}",
+                                        style:
+                                            theme.textTheme.bodyLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.onPrimary,
                                         ),
                                       ),
-                                      Text(
-                                        "End: ${discount.endDate}",
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54,
-                                          fontFamily: 'Times New Roman',
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "${'l10n.start'}: ${discount.startDate}",
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.8),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                        Text(
+                                          "${'l10n.end'}: ${discount.endDate}",
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 16),
-                              // Price Section.
+                              const SizedBox(height: 24),
+
+                              // Price Section
                               Row(
                                 children: [
                                   Text(
                                     "\$${discount.discountedPrice!}",
-                                    style: const TextStyle(
-                                      fontSize: 26,
+                                    style:
+                                        theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.green,
-                                      fontFamily: 'Times New Roman',
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
                                     "\$${discount.originalPrice!}",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Colors.grey.shade600,
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      color: colorScheme.onSurface
+                                          .withOpacity(0.6),
                                       decoration: TextDecoration.lineThrough,
-                                      fontFamily: 'Times New Roman',
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              // Horizontal List of Included Items.
-                              const Text(
-                                'Included Items',
-                                style: TextStyle(
+
+                              // Included Items Section
+                              Text(
+                                'l10n.includedItems',
+                                style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Times New Roman',
-                                  fontSize: 18,
-                                  color: Colors.black87,
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              SizedBox(
-                                height: 170,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: includedItems.length,
-                                  itemBuilder: (context, index) {
-                                    final item = includedItems[index];
-                                    return Container(
-                                      width: 140,
-                                      margin: const EdgeInsets.only(right: 12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                    top: Radius.circular(12)),
-                                            child: Image.network(
-                                              getValidImageUrl(item.imageUrl),
-                                              height: 80,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  item.name!,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily:
-                                                        'Times New Roman',
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "\$${item.price!}",
-                                                  style: const TextStyle(
-                                                    fontFamily:
-                                                        'Times New Roman',
-                                                    color: Colors.black87,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              // Price and Add-to-Cart Section.
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "\$${discount.discountedPrice!}",
-                                    style: const TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                      fontFamily: 'Times New Roman',
-                                    ),
-                                  ),
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                      BlocProvider.of<CartBloc>(context).add(
-                                        AddRoomToCart(
-                                            roomId: discount.roomId!, count: 1),
+                              if (includedItems.isNotEmpty)
+                                SizedBox(
+                                  height: 170,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: includedItems.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(width: 12),
+                                    itemBuilder: (context, index) {
+                                      final item = includedItems[index];
+                                      return _buildIncludedItemCard(
+                                        context,
+                                        name: item.name ?? '',
+                                        price: item.price ?? 0,
+                                        imageUrl: item.imageUrl ?? '',
                                       );
                                     },
-                                    icon: const Icon(
-                                      Icons.shopping_cart,
-                                      color: Colors.white,
-                                    ),
-                                    label: const Text(
-                                      'Add to Cart',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Times New Roman',
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 24, vertical: 14),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
+                                  ),
+                                )
+                              else
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: Text(
+                                      l10n.noitemsfound,
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurface
+                                            .withOpacity(0.6),
                                       ),
                                     ),
                                   ),
-                                ],
+                                ),
+                              const SizedBox(height: 24),
+
+                              // Add to Cart Section
+                              BlocListener<CartBloc, CartState>(
+                                listener: (context, cartState) {
+                                  if (cartState is CartAddedSuccess) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(l10n.addtocart),
+                                        backgroundColor: colorScheme.primary,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "\$${discount.discountedPrice!}",
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        BlocProvider.of<CartBloc>(context).add(
+                                          AddRoomToCart(
+                                            roomId: discount.roomId!,
+                                            count: 1,
+                                          ),
+                                        );
+                                      },
+                                      icon: Icon(
+                                        Icons.shopping_cart,
+                                        color: colorScheme.onPrimary,
+                                      ),
+                                      label: Text(
+                                        l10n.addtocart,
+                                        style:
+                                            theme.textTheme.bodyLarge?.copyWith(
+                                          color: colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: colorScheme.primary,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24, vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              AppConstants.cardRadius),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 30),
                             ],
@@ -320,31 +387,110 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                       );
                     },
                   ),
-                  // Back button.
+
+                  // Back button
                   Positioned(
-                    top: 40,
+                    top: MediaQuery.of(context).padding.top + 16,
                     left: 16,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.white.withOpacity(0.84),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_outlined,
-                          color: Colors.black,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: AnimatedContainer(
+                        duration: AppConstants.hoverDuration,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface.withOpacity(0.8),
+                          shape: BoxShape.circle,
                         ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ),
                 ],
               );
-            } else if (state is DiscountsError) {
-              return Center(child: Text(state.message));
             }
             return const SizedBox();
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildIncludedItemCard(
+    BuildContext context, {
+    required String name,
+    required num price,
+    required String imageUrl,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      width: 140,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Item image
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppConstants.cardRadius),
+            ),
+            child: CachedNetworkImage(
+              imageUrl: getValidImageUrl(imageUrl),
+              height: 80,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                height: 80,
+                color: colorScheme.surfaceVariant,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                height: 80,
+                color: colorScheme.surfaceVariant,
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+
+          // Item details
+          Padding(
+            padding: const EdgeInsets.all(AppConstants.elementSpacing),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "\$$price",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

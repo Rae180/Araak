@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
+import 'package:start/core/constants/app_constants.dart';
 import 'package:start/features/Cart/Bloc/CartBloc/cart_bloc.dart';
 import 'package:start/features/Cart/Bloc/placingOrderBloc/placing_order_bloc.dart';
 import 'package:start/features/Cart/Models/CartItem.dart';
@@ -24,7 +25,32 @@ class CartScreen extends StatefulWidget {
   State<CartScreen> createState() => _CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
+class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
+  late AnimationController _emptyCartController;
+  late Animation<double> _emptyCartAnimation;
+  bool _isCheckoutLoading = false;
+  bool _isLocationLoading = false;
+  bool _isPaymentProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emptyCartController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _emptyCartAnimation = CurvedAnimation(
+      parent: _emptyCartController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _emptyCartController.dispose();
+    super.dispose();
+  }
+
   Future<Map<String, double>> getUserCoordinates() async {
     // Check if location services are enabled.
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -57,207 +83,179 @@ class _CartScreenState extends State<CartScreen> {
     };
   }
 
-  _showNearestBranchDialog(
+  void _showNearestBranchDialog(
     BuildContext context,
     String branchAddress,
-    double distance, // in kilometers
+    double distance,
     double branchLat,
     double branchLng,
   ) {
-    print('hi');
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        print('Dialog ....');
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          elevation: 16,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20.0),
-              gradient: LinearGradient(
-                colors: [Colors.white, Colors.grey.shade100],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.cardRadius)),
+        backgroundColor: colorScheme.surface,
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.sectionPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Icon(
+                Icons.location_on,
+                size: 48,
+                color: colorScheme.primary,
               ),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Icon and Title.
-                  const Icon(
-                    Icons.location_on,
-                    size: 48,
-                    color: Colors.deepOrange,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppLocalizations.of(context)!.nearbranch,
-                    style: TextStyle(
-                      fontFamily: 'Times New Roman',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+              const SizedBox(height: 12),
+              Text(
+                l10n.nearbranch,
+                style: theme.textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              // Map preview
+              Container(
+                height: 180,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                  border: Border.all(color: colorScheme.outline),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(branchLat, branchLng),
+                      initialZoom: 15,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  // Map preview window styled like the MapPickerScreen.
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: LatLng(branchLat, branchLng),
-                          initialZoom: 15,
-                          // Here we allow interactions; if not desired, use InteractiveFlag.none
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.example.app',
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.app',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(branchLat, branchLng),
+                            width: 40,
+                            height: 40,
+                            child: Icon(
+                              Icons.location_pin,
+                              color: colorScheme.error,
+                              size: 40,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Read-only field showing branch address and distance.
-                  TextFormField(
-                    initialValue:
-                        "$branchAddress (${distance.toStringAsFixed(1)} km away)",
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.branchaddr,
-                      labelStyle: const TextStyle(
-                        fontFamily: 'Times New Roman',
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.black),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Stripe Payment Button.
-                  ElevatedButton(
-                    onPressed: () {
-                      // TODO: Integrate your Stripe Payment functionality here.
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                    ),
-                    child: const Text(
-                      "Pay with Stripe",
-                      style: TextStyle(
-                        fontFamily: 'Times New Roman',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Cancel and Confirm buttons.
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text(
-                          AppLocalizations.of(context)!.cancel,
-                          style: TextStyle(
-                            fontFamily: 'Times New Roman',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          // TODO: Add your confirm logic here.
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.confirmation,
-                          style: TextStyle(
-                            fontFamily: 'Times New Roman',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Address and distance
+              ListTile(
+                leading: Icon(Icons.place, color: colorScheme.primary),
+                title: Text(
+                  branchAddress,
+                  style: theme.textTheme.bodyLarge,
+                ),
+                subtitle: Text(
+                  "${distance.toStringAsFixed(1)} ${'l10n.kmaway'}",
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Payment button with loading state
+              StatefulBuilder(
+                builder: (context, setState) {
+                  return ElevatedButton(
+                    onPressed: _isPaymentProcessing
+                        ? null
+                        : () async {
+                            setState(() => _isPaymentProcessing = true);
+                            await Future.delayed(const Duration(seconds: 2));
+                            setState(() => _isPaymentProcessing = false);
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('l10n.paymentsuccess'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: _isPaymentProcessing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text('l10n.paywithstripe'),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l10n.cancel),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      backgroundColor: colorScheme.surfaceVariant,
+                    ),
+                    child: Text(l10n.confirmation),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   void _showDeliveryDetailsDialog(BuildContext context) {
-    // Local state for the dialog.
-    LatLng? selectedLocation; // This holds the picked location.
-    double? latitude; // To store the latitude of the selected location.
-    double? longitude; // To store the longitude of the selected location.
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    // Controllers for the address inputs.
+    // Local state for the dialog
+    LatLng? selectedLocation;
+    double? latitude;
+    double? longitude;
     final TextEditingController addressController = TextEditingController();
     final TextEditingController mapController = TextEditingController();
-
-    // Variable to hold the final price received from the backend.
     num? finalPrice;
-    bool priceFetched = false; // To control whether to show price.
+    bool priceFetched = false;
+    bool isCalculatingPrice = false;
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        // If your dialog is part of a BlocListener, you could wrap it here
-        // For instance, listening to PlacingOrderBloc for a DeliveryPriceSuccess state.
+      builder: (context) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
+          builder: (context, setState) {
             return BlocProvider(
               create: (context) =>
                   PlacingOrderBloc(client: NetworkApiServiceHttp()),
@@ -267,323 +265,295 @@ class _CartScreenState extends State<CartScreen> {
                     setState(() {
                       finalPrice = state.deliveryPrice;
                       priceFetched = true;
+                      isCalculatingPrice = false;
                     });
                   } else if (state is PlacingOrderError) {
-                    // Example: Show error via snack bar.
+                    setState(() => isCalculatingPrice = false);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.message)),
                     );
                   }
                 },
-                child: StatefulBuilder(
-                  builder: (BuildContext context, StateSetter setState) {
-                    return Dialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                      ),
-                      elevation: 16,
-                      backgroundColor: Colors.transparent,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20.0),
-                          gradient: LinearGradient(
-                            colors: [Colors.white, Colors.grey.shade100],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                child: Dialog(
+                  backgroundColor: colorScheme.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.cardRadius),
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: SingleChildScrollView(
+                      padding:
+                          const EdgeInsets.all(AppConstants.sectionPadding),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
                             children: [
-                              // Header Icon and Title.
-                              const Icon(
+                              Icon(
                                 Icons.local_shipping,
-                                color: Colors.deepOrange,
-                                size: 48,
+                                size: 32,
+                                color: colorScheme.primary,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(width: 12),
                               Text(
-                                AppLocalizations.of(context)!.deliveryinfo,
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Times New Roman',
-                                ),
+                                l10n.deliveryinfo,
+                                style: theme.textTheme.titleLarge,
                               ),
-                              const SizedBox(height: 10),
-                              Text(
-                                AppLocalizations.of(context)!.deliverydet,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: 'Times New Roman',
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-                              // Delivery Location Field (read-only)
-                              GestureDetector(
-                                onTap: () async {
-                                  // Navigate to your map picker screen.
-                                  // Replace MapPickerScreen() with your actual map picker implementation.
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MapPickerScreen(),
-                                    ),
-                                  );
-                                  if (result != null && result is LatLng) {
-                                    // Extract the latitude and longitude.
-                                    setState(() {
-                                      selectedLocation = result;
-                                      latitude = result.latitude;
-                                      longitude = result.longitude;
-                                      mapController.text = result.toString();
-                                    });
-                                  }
-                                },
-                                child: AbsorbPointer(
-                                  child: TextField(
-                                    controller: mapController,
-                                    decoration: InputDecoration(
-                                      labelText: selectedLocation != null
-                                          ? "${AppLocalizations.of(context)!.location}: (${selectedLocation!.latitude.toStringAsFixed(4)}, ${selectedLocation!.longitude.toStringAsFixed(4)})"
-                                          : "${AppLocalizations.of(context)!.selectonmap}",
-                                      suffixIcon: const Icon(Icons.map,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                            color: Colors.grey),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                            color: Colors.black),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // New manual address entry field.
-                              TextFormField(
-                                controller: addressController,
-                                decoration: InputDecoration(
-                                  labelText: AppLocalizations.of(context)!
-                                      .enteraddress,
-                                  hintText: "123 Main St, City, Country",
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        const BorderSide(color: Colors.grey),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        const BorderSide(color: Colors.black),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              // Button to check the final price.
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Ensure that a location has been selected.
-                                  if (selectedLocation == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              AppLocalizations.of(context)!
-                                                  .selectloca)),
-                                    );
-                                    return;
-                                  }
-                                  // Extract the numbers from the selected LatLng.
-                                  double lat = selectedLocation!.latitude;
-                                  double lng = selectedLocation!.longitude;
-                                  // Dispatch the event to get the delivery price.
-                                  BlocProvider.of<PlacingOrderBloc>(context)
-                                      .add(
-                                    GetDeliveryPriceEvent(
-                                      address: addressController.text,
-                                      Latitude: lat,
-                                      Longitude: lng,
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 24, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: Text(
-                                  AppLocalizations.of(context)!.finalprice,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontFamily: 'Times New Roman',
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              // Optionally show the price once it is fetched from the backend.
-                              if (priceFetched && finalPrice != null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black87,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        offset: const Offset(2, 2),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    "${AppLocalizations.of(context)!.finalprice}: \$${finalPrice!.toStringAsFixed(2)}",
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'Times New Roman',
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            l10n.deliverydet,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 24),
 
-                              const SizedBox(height: 20),
-                              // Cancel & Confirm Order buttons.
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text(
-                                      AppLocalizations.of(context)!.cancel,
-                                      style: TextStyle(
-                                        fontFamily: 'Times New Roman',
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black,
-                                      ),
-                                    ),
+                          // Map selection field
+                          GestureDetector(
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MapPickerScreen(),
+                                ),
+                              );
+                              if (result != null && result is LatLng) {
+                                setState(() {
+                                  selectedLocation = result;
+                                  latitude = result.latitude;
+                                  longitude = result.longitude;
+                                  mapController.text = result.toString();
+                                });
+                              }
+                            },
+                            child: AbsorbPointer(
+                              child: TextField(
+                                controller: mapController,
+                                decoration: InputDecoration(
+                                  labelText: selectedLocation != null
+                                      ? 'l10n.locationselected'
+                                      : l10n.selectonmap,
+                                  suffixIcon: const Icon(Icons.map),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        AppConstants.cardRadius),
                                   ),
-                                  const SizedBox(width: 8),
-                                  BlocListener<PlacingOrderBloc,
-                                      PlacingOrderState>(
-                                    listener: (context, state) {
-                                      if (state
-                                          is PlacingAnOrderWithDeliverySuccess) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                           SnackBar(
-                                              content: Text(
-                                                  AppLocalizations.of(context)!.ordersentsuccess)),
-                                        );
-                                      } else if (state is PlacingOrderError) {
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Address input
+                          TextFormField(
+                            controller: addressController,
+                            decoration: InputDecoration(
+                              labelText: l10n.enteraddress,
+                              hintText: 'l10n.addresshint',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                    AppConstants.cardRadius),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Calculate price button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: isCalculatingPrice
+                                  ? null
+                                  : () {
+                                      if (selectedLocation == null) {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                              content: Text(state
-                                                  .message)), // assuming state.message holds the error
+                                              content: Text(l10n.selectloca)),
                                         );
+                                        return;
                                       }
+                                      setState(() => isCalculatingPrice = true);
+                                      BlocProvider.of<PlacingOrderBloc>(context)
+                                          .add(
+                                        GetDeliveryPriceEvent(
+                                          address: addressController.text,
+                                          Latitude: latitude!,
+                                          Longitude: longitude!,
+                                        ),
+                                      );
                                     },
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) {
-                                            return AlertDialog(
-                                              title:
-                                                   Text(AppLocalizations.of(context)!.confirmorder),
-                                              content:  Text(
-                                                AppLocalizations.of(context)!.alertpay,
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    // Close the dialog without doing anything
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child:  Text(AppLocalizations.of(context)!.cancel),
-                                                ),
-                                                BlocProvider(
-                                                  create: (context) =>
-                                                      PlacingOrderBloc(
-                                                          client:
-                                                              NetworkApiServiceHttp()),
-                                                  child: Builder(
-                                                      builder: (context) {
-                                                    return TextButton(
-                                                      onPressed: () {
-                                                        // User agreed; first dismiss the dialog
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        // Now trigger the event to confirm the cart / order.
-                                                        BlocProvider.of<
-                                                                    PlacingOrderBloc>(
-                                                                context)
-                                                            .add(PlacingAnOrderWithDeliveryEvent(
-                                                                address:
-                                                                    addressController
-                                                                        .text,
-                                                                latitude:
-                                                                    latitude,
-                                                                longitude:
-                                                                    longitude));
-                                                      },
-                                                      child:
-                                                           Text(AppLocalizations.of(context)!.yes),
-                                                    );
-                                                  }),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.black,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child:  Text(
-                                        AppLocalizations.of(context)!.confirmation,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontFamily: 'Times New Roman',
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: isCalculatingPrice
+                                  ? const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    )
+                                  : Text(l10n.finalprice),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Price display
+                          if (priceFetched && finalPrice != null)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(
+                                    AppConstants.cardRadius),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${'l10n.deliveryprice'}: ",
+                                    style: theme.textTheme.bodyLarge,
+                                  ),
+                                  Text(
+                                    "\$${finalPrice!.toStringAsFixed(2)}",
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
                                     ),
                                   ),
                                 ],
                               ),
+                            ),
+                          const SizedBox(height: 24),
+
+                          // Map preview
+                          if (selectedLocation != null)
+                            Container(
+                              height: 180,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                    AppConstants.cardRadius),
+                                border: Border.all(color: colorScheme.outline),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                    AppConstants.cardRadius),
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter: selectedLocation!,
+                                    initialZoom: 15,
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName: 'com.example.app',
+                                    ),
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: selectedLocation!,
+                                          width: 40,
+                                          height: 40,
+                                          child: Icon(
+                                            Icons.location_pin,
+                                            color: colorScheme.error,
+                                            size: 40,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 24),
+
+                          // Action buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text(l10n.cancel),
+                              ),
+                              const SizedBox(width: 12),
+                              BlocListener<PlacingOrderBloc, PlacingOrderState>(
+                                listener: (context, state) {
+                                  if (state
+                                      is PlacingAnOrderWithDeliverySuccess) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(l10n.ordersentsuccess)),
+                                    );
+                                    Navigator.pop(context);
+                                  } else if (state is PlacingOrderError) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(state.message)),
+                                    );
+                                  }
+                                },
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (!priceFetched || finalPrice == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content:
+                                                Text('l10n.calculatefirst')),
+                                      );
+                                      return;
+                                    }
+
+                                    // Confirmation dialog
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text(l10n.confirmorder),
+                                        content: Text(l10n.alertpay),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: Text(l10n.cancel),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              BlocProvider.of<PlacingOrderBloc>(
+                                                      context)
+                                                  .add(
+                                                      PlacingAnOrderWithDeliveryEvent(
+                                                          address:
+                                                              addressController
+                                                                  .text,
+                                                          latitude: latitude,
+                                                          longitude:
+                                                              longitude));
+                                            },
+                                            child: Text(l10n.yes),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: colorScheme.primary,
+                                    foregroundColor: colorScheme.onPrimary,
+                                  ),
+                                  child: Text(l10n.confirmation),
+                                ),
+                              ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             );
@@ -591,24 +561,261 @@ class _CartScreenState extends State<CartScreen> {
         );
       },
     ).then((_) {
-      // Dispose controllers when the dialog closes.
       addressController.dispose();
       mapController.dispose();
     });
   }
 
+  Future<void> _refreshCart(BuildContext context) async {
+    BlocProvider.of<CartBloc>(context).add(GetCartItemsEvent());
+    await Future.delayed(
+        const Duration(milliseconds: 800)); // Simulate network delay
+  }
+
+  void _handleCheckout() async {
+    setState(() => _isCheckoutLoading = true);
+    await Future.delayed(
+        const Duration(milliseconds: 500)); // Simulate processing
+    setState(() => _isCheckoutLoading = false);
+
+    // ... existing checkout logic ...
+  }
+
+  void _showOrderMethodDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    showDialog(
+      context: context,
+      builder: (context) => BlocProvider(
+        create: (context) => PlacingOrderBloc(client: NetworkApiServiceHttp()),
+        child: Dialog(
+          backgroundColor: colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.sectionPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.delivery_dining,
+                  size: 48,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.placeorder,
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.howorder,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+
+                // Delivery options
+                Column(
+                  children: [
+                    // Company delivery button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showDeliveryDetailsDialog(context);
+                        },
+                        icon: Icon(Icons.local_shipping,
+                            color: colorScheme.primary),
+                        label: Text(l10n.companydelivery),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: colorScheme.outline),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Self-collect button
+                    BlocListener<PlacingOrderBloc, PlacingOrderState>(
+                      listener: (context, state) {
+                        if (state is LocationSendSuccess) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            _showNearestBranchDialog(
+                              context,
+                              state.nearBranch.branch!.address!,
+                              state.nearBranch.branch!.distanceKm!,
+                              double.parse(state.nearBranch.branch!.latitude!),
+                              double.parse(state.nearBranch.branch!.longitude!),
+                            );
+                          });
+                        } else if (state is PlacingOrderError) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(state.message)));
+                        }
+                      },
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              Map<String, double> coordinates =
+                                  await getUserCoordinates();
+                              double lat = coordinates['latitude']!;
+                              double lng = coordinates['longitude']!;
+
+                              BlocProvider.of<PlacingOrderBloc>(context).add(
+                                  GetNearestBranchEvent(
+                                      longitue: lng, latitude: lat));
+                            } catch (e) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(content: Text("$e")));
+                            }
+                          },
+                          icon: Icon(Icons.person_pin_circle,
+                              color: colorScheme.primary),
+                          label: Text(l10n.colllectorder),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(color: colorScheme.outline),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Cancel button
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l10n.cancel),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCheckoutConfirmationDialog(
+      BuildContext context, GetCartItemsSuccess state) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.sectionPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.shopping_cart_checkout,
+                size: 48,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.confirmorder,
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.placeorder,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+
+              // Order summary
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('l10n.subtotal',
+                            style: theme.textTheme.bodyMedium),
+                        Text(
+                          "\$${state.item.totalPrice!.toStringAsFixed(2)}",
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(l10n.totaltime, style: theme.textTheme.bodyMedium),
+                        Text(
+                          "${state.item.totalTime ?? '45'} ${'l10n.minutes'}",
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(l10n.cancel),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showOrderMethodDialog(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                    ),
+                    child: Text(l10n.confirmation),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => CartBloc(client: NetworkApiServiceHttp())
             ..add(GetCartItemsEvent()),
         ),
-        // BlocProvider(
-        //   create: (context) =>
-        //       PlacingOrderBloc(client: NetworkApiServiceHttp()),
-        // ),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -618,7 +825,7 @@ class _CartScreenState extends State<CartScreen> {
             },
             icon: Icon(
               Icons.delivery_dining_outlined,
-              color: Colors.black,
+              color: colorScheme.onSurface,
               size: 30,
             ),
           ),
@@ -629,26 +836,32 @@ class _CartScreenState extends State<CartScreen> {
                 },
                 icon: Icon(
                   Icons.wallet_outlined,
-                  color: Colors.black,
+                  color: colorScheme.onSurface,
                   size: 30,
                 )),
           ],
           elevation: 0,
           scrolledUnderElevation: 0,
-          title:  Text(
-            AppLocalizations.of(context)!.mycart,
-            style: TextStyle(fontFamily: 'Times New Roman'),
+          title: Text(
+            l10n.mycart,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Times new Roman',
+            ),
           ),
           centerTitle: true,
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: BlocBuilder<CartBloc, CartState>(
             builder: (context, state) {
               if (state is CartLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                    child: CircularProgressIndicator(
+                  color: colorScheme.primary,
+                ));
               } else if (state is GetCartItemsSuccess) {
                 final cartRooms = state.item.rooms ?? [];
                 final cartItems = state.item.items ?? [];
@@ -660,592 +873,314 @@ class _CartScreenState extends State<CartScreen> {
                   children: [
                     // Expanded list of cart items.
                     Expanded(
-                      child: ListView.separated(
-                        itemCount: combinedList.length,
-                        separatorBuilder: (context, index) =>
-                            const Divider(height: 20, color: Colors.grey),
-                        itemBuilder: (context, index) {
-                          final item = combinedList[index];
-                          final key =
-                              Key('//${item.runtimeType}_${item.id ?? index}');
-                          return Dismissible(
-                              key: key,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                color: Colors.redAccent,
-                                child: const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              direction: DismissDirection.endToStart,
-                              onDismissed: (direction) {
-                                BlocProvider.of<CartBloc>(context).add(
-                                  RemoveFromCartEvent(
-                                      roomId: item is Rooms ? item.id : null,
-                                      itemId: item is Items ? item.id : null,
-                                      custId: null,
-                                      roomCustId: null,
-                                      count: item is Rooms
-                                          ? item.count
-                                          : item is Items
-                                              ? item.count
-                                              : null),
-                                );
-                              },
-                              confirmDismiss: (direction) async {
-                                final result = await showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title:  Text(AppLocalizations.of(context)!.delete),
-                                    content:  Text(
-                                      AppLocalizations.of(context)!.removeitem,
+                      child: combinedList.isEmpty
+                          ? _buildEmptyCart(context, l10n, colorScheme)
+                          : ListView.separated(
+                              itemCount: combinedList.length,
+                              separatorBuilder: (context, index) => Divider(
+                                  height: AppConstants.elementSpacing,
+                                  color: colorScheme.outline.withOpacity(0.2)),
+                              itemBuilder: (context, index) {
+                                final item = combinedList[index];
+                                final key = Key(
+                                    '//${item.runtimeType}_${item.id ?? index}');
+                                return Dismissible(
+                                    key: key,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      color: Colors.redAccent,
+                                      child: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child:  Text(AppLocalizations.of(context)!.cancel),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child:  Text(AppLocalizations.of(context)!.delete),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                return result;
-                              },
-                              child: item is Items
-                                  ? CartItemWidget(
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ItemDetailesPage(
-                                                      itemId: item.id,
-                                                    )));
-                                      },
-                                      imageUrl: item.imageUrl!,
-                                      name: item.name!,
-                                      price: 10.2,
-                                      count: item.count!,
-                                      onIncrease: () {
-                                        BlocProvider.of<CartBloc>(context).add(
-                                            AddItemToCart(
-                                                itemId: item.id!, count: 1));
-                                      },
-                                      onDecrease: () {
-                                        BlocProvider.of<CartBloc>(context).add(
-                                          RemoveFromCartEvent(
-                                              roomId: null,
-                                              itemId: item.id,
-                                              custId: null,
-                                              roomCustId: null,
-                                              count: 1),
-                                        );
-                                      })
-                                  : item is Rooms
-                                      ? CartRoomWidget(
-                                          onTap: () {
-                                            Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ProductDetailsPage(
-                                                          roomId: item.id,
-                                                        )));
-                                          },
-                                          imageUrl: item.imageUrl!,
-                                          name: item.name!,
-                                          price: 10,
-                                          count: item.count!,
-                                          onIncrease: () {
-                                            BlocProvider.of<CartBloc>(context)
-                                                .add(AddRoomToCart(
-                                                    roomId: item.id!,
-                                                    count: 1));
-                                          },
-                                          onDecrease: () {
-                                            BlocProvider.of<CartBloc>(context)
-                                                .add(RemoveFromCartEvent(
-                                                    roomId: item.id,
-                                                    itemId: null,
+                                    direction: DismissDirection.endToStart,
+                                    onDismissed: (direction) {
+                                      BlocProvider.of<CartBloc>(context).add(
+                                        RemoveFromCartEvent(
+                                            roomId:
+                                                item is Rooms ? item.id : null,
+                                            itemId:
+                                                item is Items ? item.id : null,
+                                            custId: null,
+                                            roomCustId: null,
+                                            count: item is Rooms
+                                                ? item.count
+                                                : item is Items
+                                                    ? item.count
+                                                    : null),
+                                      );
+                                    },
+                                    confirmDismiss: (direction) async {
+                                      final result = await showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text(
+                                              AppLocalizations.of(context)!
+                                                  .delete),
+                                          content: Text(
+                                            AppLocalizations.of(context)!
+                                                .removeitem,
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                              child: Text(
+                                                  AppLocalizations.of(context)!
+                                                      .cancel),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
+                                              child: Text(
+                                                  AppLocalizations.of(context)!
+                                                      .delete),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      return result;
+                                    },
+                                    child: item is Items
+                                        ? CartItemWidget(
+                                            onTap: () {
+                                              Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ItemDetailesPage(
+                                                            itemId: item.id,
+                                                          )));
+                                            },
+                                            imageUrl: item.imageUrl!,
+                                            name: item.name!,
+                                            price: 10.2,
+                                            count: item.count!,
+                                            onIncrease: () {
+                                              BlocProvider.of<CartBloc>(context)
+                                                  .add(AddItemToCart(
+                                                      itemId: item.id!,
+                                                      count: 1));
+                                            },
+                                            onDecrease: () {
+                                              BlocProvider.of<CartBloc>(context)
+                                                  .add(
+                                                RemoveFromCartEvent(
+                                                    roomId: null,
+                                                    itemId: item.id,
                                                     custId: null,
                                                     roomCustId: null,
-                                                    count: 1));
-                                          })
-                                      : const SizedBox());
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Total Summary container with Total Price and Total Time.
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Column displaying Total Price and Total Time.
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${AppLocalizations.of(context)!.total}: \$${state.item.totalPrice!.toStringAsFixed(1)}",
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Times New Roman',
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "${AppLocalizations.of(context)!.totaltime}: ${state.item.totalTime ?? '45 min'}",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                  fontFamily: 'Times New Roman',
-                                ),
-                              ),
-                            ],
-                          ),
-                          // Checkout button
-                          ElevatedButton(
-                            onPressed: () {
-                              // First dialog: Confirm Order dialog
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return Dialog(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20.0),
-                                    ),
-                                    elevation: 16,
-                                    backgroundColor: Colors.transparent,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Colors.white,
-                                            Colors.grey.shade100,
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.help_outline,
-                                            color: Colors.deepOrange,
-                                            size: 48,
-                                          ),
-                                          const SizedBox(height: 10),
-                                           Text(
-                                            AppLocalizations.of(context)!.confirmorder,
-                                            style: TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Times New Roman',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                           Text(
-                                            AppLocalizations.of(context)!.placeorder,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontFamily: 'Times New Roman',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 15),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Colors.black.withOpacity(0.1),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Column(
-                                              children: [
-                                                Text(
-                                                  "${AppLocalizations.of(context)!.total}: \$${state.item.totalPrice!.toStringAsFixed(2)}",
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontFamily:
-                                                        'Times New Roman',
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "${AppLocalizations.of(context)!.totaltime}: ${state.item.totalTime} minutes",
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontFamily:
-                                                        'Times New Roman',
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context)
-                                                      .pop(); // Dismiss first dialog
+                                                    count: 1),
+                                              );
+                                            })
+                                        : item is Rooms
+                                            ? CartRoomWidget(
+                                                onTap: () {
+                                                  Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ProductDetailsPage(
+                                                                roomId: item.id,
+                                                              )));
                                                 },
-                                                child:  Text(
-                                                  AppLocalizations.of(context)!.cancel,
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          'Times New Roman',
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: Colors.black),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  // First, dismiss the current confirmation dialog.
-                                                  Navigator.of(context).pop();
-
-                                                  // Then, show the second dialog with order placement options.
-                                                  showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext context) {
-                                                      return BlocProvider(
-                                                        create: (context) =>
-                                                            PlacingOrderBloc(
-                                                                client:
-                                                                    NetworkApiServiceHttp()),
-                                                        child: Dialog(
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        20.0),
-                                                          ),
-                                                          elevation: 16,
-                                                          backgroundColor:
-                                                              Colors
-                                                                  .transparent,
-                                                          child: Container(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(20),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          20.0),
-                                                              gradient:
-                                                                  LinearGradient(
-                                                                colors: [
-                                                                  Colors.white,
-                                                                  Colors.grey
-                                                                      .shade100,
-                                                                ],
-                                                                begin: Alignment
-                                                                    .topLeft,
-                                                                end: Alignment
-                                                                    .bottomRight,
-                                                              ),
-                                                            ),
-                                                            child: Column(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                Icon(
-                                                                  Icons
-                                                                      .delivery_dining,
-                                                                  color: Colors
-                                                                      .deepOrange,
-                                                                  size: 48,
-                                                                ),
-                                                                const SizedBox(
-                                                                    height: 10),
-                                                                 Text(
-                                                                  AppLocalizations.of(context)!.placeorder,
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        22,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontFamily:
-                                                                        'Times New Roman',
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                    height: 10),
-                                                                 Text(
-                                                                AppLocalizations.of(context)!.howorder,
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        16,
-                                                                    fontFamily:
-                                                                        'Times New Roman',
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                    height: 20),
-                                                                // Options for the order placement.
-                                                                ElevatedButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .pop();
-                                                                    _showDeliveryDetailsDialog(
-                                                                        context);
-                                                                  },
-                                                                  style: ElevatedButton
-                                                                      .styleFrom(
-                                                                    backgroundColor:
-                                                                        Colors
-                                                                            .black,
-                                                                    padding: const EdgeInsets
-                                                                        .symmetric(
-                                                                        horizontal:
-                                                                            12,
-                                                                        vertical:
-                                                                            14),
-                                                                    shape: RoundedRectangleBorder(
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(12)),
-                                                                  ),
-                                                                  child:
-                                                                       Text(
-                                                                  AppLocalizations.of(context)!.companydelivery,
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Times New Roman',
-                                                                      color: Colors
-                                                                          .white,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                    height: 10),
-                                                                BlocListener<
-                                                                    PlacingOrderBloc,
-                                                                    PlacingOrderState>(
-                                                                  listener:
-                                                                      (context,
-                                                                          state) {
-                                                                    print(
-                                                                        'the state is : $state');
-                                                                    if (state
-                                                                        is LocationSendSuccess) {
-                                                                      print(
-                                                                          'wait what ?');
-                                                                      WidgetsBinding
-                                                                          .instance
-                                                                          .addPostFrameCallback(
-                                                                              (_) {
-                                                                        _showNearestBranchDialog(
-                                                                            context,
-                                                                            state.nearBranch.branch!.address!,
-                                                                            state.nearBranch.branch!.distanceKm!,
-                                                                            double.parse(state.nearBranch.branch!.latitude!),
-                                                                            double.parse(state.nearBranch.branch!.longitude!));
-                                                                      });
-                                                                    } else if (state
-                                                                        is PlacingOrderError) {
-                                                                      ScaffoldMessenger.of(
-                                                                              context)
-                                                                          .showSnackBar(
-                                                                              SnackBar(content: Text(state.message)));
-                                                                    }
-                                                                  },
-                                                                  child: Builder(
-                                                                      builder:
-                                                                          (context) {
-                                                                    return ElevatedButton(
-                                                                      onPressed:
-                                                                          () async {
-                                                                        try {
-                                                                          print(
-                                                                              'trying....');
-                                                                          Map<String, double>
-                                                                              coordinates =
-                                                                              await getUserCoordinates();
-                                                                          print(
-                                                                              'after getting cordinates ....');
-                                                                          double
-                                                                              lat =
-                                                                              coordinates['latitude']!;
-                                                                          double
-                                                                              lng =
-                                                                              coordinates['longitude']!;
-
-                                                                          BlocProvider.of<PlacingOrderBloc>(context).add(GetNearestBranchEvent(
-                                                                              longitue: lng,
-                                                                              latitude: lat));
-                                                                          // Navigator.of(context)
-                                                                          //     .pop();
-                                                                        } catch (e) {
-                                                                          ScaffoldMessenger.of(context)
-                                                                              .showSnackBar(SnackBar(content: Text("Error retrieving location: $e")));
-                                                                        }
-                                                                        // Add functionality for "I will collect my order"
-                                                                      },
-                                                                      style: ElevatedButton
-                                                                          .styleFrom(
-                                                                        backgroundColor:
-                                                                            Colors.black,
-                                                                        padding: const EdgeInsets
-                                                                            .symmetric(
-                                                                            horizontal:
-                                                                                12,
-                                                                            vertical:
-                                                                                14),
-                                                                        shape: RoundedRectangleBorder(
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(12)),
-                                                                      ),
-                                                                      child:
-                                                                           Text(
-                                                                        AppLocalizations.of(context)!.colllectorder,
-                                                                        style:
-                                                                            TextStyle(
-                                                                          fontFamily:
-                                                                              'Times New Roman',
-                                                                          color:
-                                                                              Colors.white,
-                                                                        ),
-                                                                      ),
-                                                                    );
-                                                                  }),
-                                                                ),
-                                                                const SizedBox(
-                                                                    height: 10),
-                                                                TextButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .pop();
-                                                                  },
-                                                                  child:
-                                                                       Text(
-                                                                    AppLocalizations.of(context)!.cancel,
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontFamily:
-                                                                          'Times New Roman',
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w600,
-                                                                      color: Colors
-                                                                          .black,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
+                                                imageUrl: item.imageUrl!,
+                                                name: item.name!,
+                                                price: 10,
+                                                count: item.count!,
+                                                onIncrease: () {
+                                                  BlocProvider.of<CartBloc>(
+                                                          context)
+                                                      .add(AddRoomToCart(
+                                                          roomId: item.id!,
+                                                          count: 1));
                                                 },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.black,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
-                                                  ),
-                                                ),
-                                                child:  Text(
-                                                  AppLocalizations.of(context)!.confirmation,
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontFamily:
-                                                        'Times New Roman',
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                                                onDecrease: () {
+                                                  BlocProvider.of<CartBloc>(
+                                                          context)
+                                                      .add(RemoveFromCartEvent(
+                                                          roomId: item.id,
+                                                          itemId: null,
+                                                          custId: null,
+                                                          roomCustId: null,
+                                                          count: 1));
+                                                })
+                                            : const SizedBox());
+                              },
                             ),
-                            child:  Text(
-                              AppLocalizations.of(context)!.checkout,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Times New Roman',
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
                     ),
-                    const SizedBox(height: 70),
+                    if (combinedList.isNotEmpty) ...[
+                      const SizedBox(
+                        height: AppConstants.elementSpacing,
+                      ),
+                      _buildCartSummary(context, state, l10n, colorScheme),
+                      const SizedBox(
+                        height: 70,
+                      )
+                    ],
                   ],
                 );
               } else if (state is CartError) {
-                return Center(child: Text(state.message));
+                return Center(
+                  child: Text(
+                    state.message,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.error,
+                    ),
+                  ),
+                );
               }
               return const SizedBox();
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyCart(
+      BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.shopping_cart_outlined,
+            size: 80,
+            color: colorScheme.onSurface.withOpacity(0.3),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'l10n.cartempty',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'l10n.additemstocart',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+              ),
+            ),
+            child: Text(
+              'l10n.continueshopping',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartSummary(BuildContext context, GetCartItemsSuccess state,
+      AppLocalizations l10n, ColorScheme colorScheme) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.elementSpacing),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Summary row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'l10n.subtotal',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "\$${state.item.totalPrice!.toStringAsFixed(2)}",
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    l10n.totaltime,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "${state.item.totalTime ?? '45'} ${'l10n.minutes'}",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AppConstants.elementSpacing),
+
+          // Checkout button
+          ElevatedButton(
+            onPressed: () {
+              _showCheckoutConfirmationDialog(context, state);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              minimumSize: const Size(double.infinity, 56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: Text(
+              l10n.checkout,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

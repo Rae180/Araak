@@ -16,196 +16,230 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  late final LoginBloc _loginBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _loginBloc = LoginBloc(client: NetworkApiServiceHttp());
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _loginBloc.close();
+    super.dispose();
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      _loginBloc.add(LoginUserEvent(
+        email: _emailController.text,
+        password: _passwordController.text,
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => LoginBloc(client: NetworkApiServiceHttp()),
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+    return BlocProvider.value(
+      value: _loginBloc,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F0EB),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SingleChildScrollView(
-              child: Column(
-                //Text(AppLocalizations.of(context)!.welcome);
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Image.asset(
-                      'assets/login_dec.png',
-                      height: 270,
-                    ),
-                  ),
-
-                  Text(
-                    AppLocalizations.of(context)!.login,
-                    style: TextStyle(
-                      fontFamily: 'Times New Roman',
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.email,
-                      labelStyle: TextStyle(color: Color(0xFFC9C7C5)),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.vertical,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Image.asset(
+                        'assets/login_dec.png',
+                        height: 220,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an email address';
-                      }
-                      String emailPattern =
-                          r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
-                      RegExp regex = RegExp(emailPattern);
-                      if (!regex.hasMatch(value)) {
-                        return 'Please enter a valid email address';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.password,
-                      labelStyle: const TextStyle(color: Color(0xFFC9C7C5)),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                        borderRadius: BorderRadius.all(Radius.circular(15)),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
+                    const SizedBox(height: 32),
+                    Text(
+                      l10n.login,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
+                    const SizedBox(height: 32),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildEmailField(theme, isDarkMode, l10n),
+                          const SizedBox(height: 20),
+                          _buildPasswordField(theme, isDarkMode, l10n),
+                          const SizedBox(height: 8),
+                          _buildForgotPasswordButton(isDarkMode, l10n),
+                          const SizedBox(height: 40),
+                          _buildLoginButton(theme, isDarkMode, l10n),
+                          const SizedBox(height: 16),
+                          _buildSignUpButton(theme, isDarkMode, l10n),
+                        ],
                       ),
-                      child: Text(
-                        AppLocalizations.of(context)!.forgetpassword,
-                        style: TextStyle(fontFamily: 'Times New Roman'),
-                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  const SizedBox(height: 70),
-                  BlocConsumer<LoginBloc, LoginState>(
-                    listener: (context, state) {
-                      if (state is LoginError) {
-                        showModalBottomSheet(
-                            context: context,
-                            builder: (BuildContext ctx) {
-                              return Container(
-                                padding: const EdgeInsets.all(17.0),
-                                child: Text(state.message),
-                              );
-                            });
-                      } else if (state is LoginSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              AppLocalizations.of(context)!.loginsucc,
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          Navigator.of(context)
-                              .pushReplacementNamed(home.routeName);
-                        });
-                      }
-                    },
-                    builder: (context, state) {
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF181614),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        onPressed: () {
-                          BlocProvider.of<LoginBloc>(context).add(
-                              LoginUserEvent(
-                                  email: _emailController.text,
-                                  password: _passwordController.text));
-                        },
-                        child: state is LoginingLoading
-                            ? const CircularProgressIndicator(
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              )
-                            : Text(
-                                AppLocalizations.of(context)!.login,
-                                style: TextStyle(
-                                  fontFamily: 'Times New Roman',
-                                  fontSize: 14,
-                                  color: Color.lerp(
-                                      Color(0xFFF4F0EB), Colors.white, 0.2),
-                                ),
-                              ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  // const Spacer(),
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xFF181614),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      side: const BorderSide(color: Colors.black),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pushReplacementNamed(SignUpPage.routeName);
-                    },
-                    child: Text(
-                      AppLocalizations.of(context)!.newuser,
-                      style: TextStyle(fontFamily: 'Times New Roman'),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailField(
+      ThemeData theme, bool isDarkMode, AppLocalizations l10n) {
+    return TextFormField(
+      controller: _emailController,
+      style: TextStyle(color: theme.colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: l10n.email,
+        filled: true,
+        fillColor: isDarkMode
+            ? Colors.deepPurple.shade800.withOpacity(0.3)
+            : Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'email required';
+        if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+            .hasMatch(value)) return 'invalid email';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPasswordField(
+      ThemeData theme, bool isDarkMode, AppLocalizations l10n) {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: !_isPasswordVisible,
+      style: TextStyle(color: theme.colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: l10n.password,
+        filled: true,
+        fillColor: isDarkMode
+            ? Colors.deepPurple.shade800.withOpacity(0.3)
+            : Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+            color: theme.colorScheme.secondary,
+          ),
+          onPressed: () =>
+              setState(() => _isPasswordVisible = !_isPasswordVisible),
+        ),
+      ),
+      textInputAction: TextInputAction.done,
+      onFieldSubmitted: (_) => _submitForm(),
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'password required';
+        if (value.length < 6) return 'invalid password';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildForgotPasswordButton(bool isDarkMode, AppLocalizations l10n) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+        child: Text(
+          l10n.forgetpassword,
+          style: TextStyle(
+            color: isDarkMode ? Colors.blue.shade200 : Colors.blue.shade700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton(
+      ThemeData theme, bool isDarkMode, AppLocalizations l10n) {
+    return BlocConsumer<LoginBloc, LoginState>(
+      listener: (context, state) {
+        if (state is LoginError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: theme.colorScheme.error,
+            ),
+          );
+        } else if (state is LoginSuccess) {
+          Navigator.pushReplacementNamed(context, home.routeName);
+        }
+      },
+      builder: (context, state) {
+        return ElevatedButton(
+          onPressed: state is LoginingLoading ? null : _submitForm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.primaryColor,
+            foregroundColor: theme.colorScheme.onPrimary,
+            minimumSize: const Size(double.infinity, 54),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: state is LoginingLoading
+              ? const CircularProgressIndicator()
+              : Text(
+                  l10n.login,
+                  style: const TextStyle(fontSize: 16),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSignUpButton(
+      ThemeData theme, bool isDarkMode, AppLocalizations l10n) {
+    return OutlinedButton(
+      onPressed: () =>
+          Navigator.pushReplacementNamed(context, SignUpPage.routeName),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(
+          color: theme.colorScheme.primary,
+          width: 1.5,
+        ),
+        minimumSize: const Size(double.infinity, 54),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: Text(
+        l10n.newuser,
+        style: TextStyle(
+          color: isDarkMode ? Colors.blueAccent : theme.colorScheme.primary ,
+          fontSize: 16,
         ),
       ),
     );

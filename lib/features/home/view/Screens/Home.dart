@@ -1,3 +1,4 @@
+// Home Screen (Navigation)
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:start/features/Cart/view/Screens/CartScreen.dart';
@@ -50,12 +51,15 @@ class _homeState extends State<home> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
         onPageChanged: _onPageChanged,
-        children: List.generate(_pages.length, (index) => _pages[index]),
+        children: _pages,
       ),
       extendBody: true,
       bottomNavigationBar: Padding(
@@ -63,46 +67,62 @@ class _homeState extends State<home> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Colors.black26,
+                color: Colors.black.withOpacity(0.3),
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
             ],
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFFF4F0EB), // Soft beige
-                Color(0xFFEAD7B9), // Warm beige
-                Color(0xFFD9B382),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: isDarkMode
+                ? LinearGradient(
+                    colors: [
+                      Color(0xFF1A1A2E), // Deep navy
+                      Color(0xFF16213E), // Darker blue
+                      Color(0xFF0F3460), // Midnight blue
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : LinearGradient(
+                    colors: [
+                      Color(0xFFF8F9FA), // Light gray
+                      Color(0xFFE9ECEF), // Soft gray
+                      Color.fromARGB(255, 80, 167, 109), // Medium gray
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
           ),
           child: SalomonBottomBar(
             currentIndex: selectedIndex,
             onTap: _onItemTapped,
+            itemPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             items: [
               SalomonBottomBarItem(
-                icon: const Icon(Icons.home_outlined),
-                title: Text(AppLocalizations.of(context)!.home),
-                selectedColor: Colors.black,
+                icon: Icon(Icons.home_outlined),
+                title: Text(l10n.home),
+                selectedColor: isDarkMode ? Colors.white : Colors.black,
+                unselectedColor: isDarkMode ? Colors.white70 : Colors.black54,
               ),
               SalomonBottomBarItem(
-                icon: const Icon(Icons.favorite_border),
-                title: Text(AppLocalizations.of(context)!.fav),
-                selectedColor: Colors.black,
+                icon: Icon(Icons.favorite_border),
+                title: Text(l10n.fav),
+                selectedColor: isDarkMode ? Colors.white : Colors.black,
+                unselectedColor: isDarkMode ? Colors.white70 : Colors.black54,
               ),
               SalomonBottomBarItem(
-                icon: const Icon(Icons.shopping_cart_outlined),
-                title: Text(AppLocalizations.of(context)!.cart),
-                selectedColor: Colors.black,
+                icon: Icon(Icons.shopping_cart_outlined),
+                title: Text(l10n.cart),
+                selectedColor: isDarkMode ? Colors.white : Colors.black,
+                unselectedColor: isDarkMode ? Colors.white70 : Colors.black54,
               ),
               SalomonBottomBarItem(
-                icon: const Icon(Icons.edit_note_outlined),
-                title: Text(AppLocalizations.of(context)!.custom),
-                selectedColor: Colors.black,
+                icon: Icon(Icons.edit_note_outlined),
+                title: Text(l10n.custom),
+                selectedColor: isDarkMode ? Colors.white : Colors.black,
+                unselectedColor: isDarkMode ? Colors.white70 : Colors.black54,
               ),
             ],
           ),

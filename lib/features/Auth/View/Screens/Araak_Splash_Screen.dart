@@ -27,7 +27,7 @@ class _AraakSplashScreenState extends State<AraakSplashScreen> {
           }
         },
         child: Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor:Theme.of(context).scaffoldBackgroundColor,
           body: Center(
             child: BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {

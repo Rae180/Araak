@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:start/core/constants/app_constants.dart';
+import 'package:start/core/managers/theme_manager.dart';
 
-class CartItemWidget extends StatelessWidget {
+class CartItemWidget extends StatefulWidget {
   final String imageUrl;
   final String name;
   final num price;
@@ -21,130 +23,230 @@ class CartItemWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<CartItemWidget> createState() => _CartItemWidgetState();
+}
+
+class _CartItemWidgetState extends State<CartItemWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppConstants.hoverDuration,
+    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 0.9), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 30),
+    ]).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleQuantityChange(VoidCallback action) {
+    _controller.reset();
+    _controller.forward().then((_) => action());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
+      borderRadius: BorderRadius.circular(AppConstants.cardRadius),
       child: Container(
-        // Outer margin and padding create spacing between items.
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(
+            vertical: AppConstants.elementSpacing / 2),
+        padding: const EdgeInsets.all(AppConstants.elementSpacing),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.grey.shade50],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
+            if (!isDarkMode)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
           ],
+          border: isDarkMode
+              ? Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                )
+              : null,
         ),
         child: Row(
           children: [
-            // Image container with elegant rounded corners.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(15),
+            // Image container with loading and error states
+            Hero(
+              tag: 'cart-item-${widget.name}',
               child: Container(
-                width: 70,
-                height: 70,
-                color: Colors.grey.shade300,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey.shade300,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.error,
-                        size: 40,
-                        color: Colors.white,
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                  color: colorScheme.surfaceVariant,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                  child: Image.network(
+                    widget.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        color: colorScheme.onSurfaceVariant,
+                        size: 32,
                       ),
-                    );
-                  },
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: colorScheme.primary,
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 16),
-            // Item details (name and price).
+
+            // Item details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontFamily: 'Times New Roman',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Tooltip(
+                    message: widget.name,
+                    preferBelow: false,
+                    verticalOffset: 40,
+                    child: Text(
+                      widget.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
-                    "\$${price.toDouble().toStringAsFixed(2)}",
-                    style: TextStyle(
-                      fontFamily: 'Times New Roman',
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
+                    "\$${widget.price.toStringAsFixed(2)}",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.primary,
                     ),
                   ),
                 ],
               ),
             ),
-            // Quantity selector with creative – and + buttons.
+
+            // Quantity selector with animations
             Row(
               children: [
-                // Decrease button.
-                GestureDetector(
-                  onTap: onDecrease,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.05),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.remove,
-                      size: 20,
-                      color: Colors.black54,
+                // Decrease button
+                AnimatedBuilder(
+                  animation: _scaleAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _scaleAnimation.value,
+                      child: child,
+                    );
+                  },
+                  child: _QuantityButton(
+                    icon: Icons.remove,
+                    onPressed: () => _handleQuantityChange(widget.onDecrease),
+                    colorScheme: colorScheme,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Count display
+                Container(
+                  constraints: const BoxConstraints(minWidth: 30),
+                  alignment: Alignment.center,
+                  child: Text(
+                    widget.count.toString(),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  count.toString(),
-                  style: const TextStyle(
-                    fontFamily: 'Times New Roman',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Increase button.
-                GestureDetector(
-                  onTap: onIncrease,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.05),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      size: 20,
-                      color: Colors.black54,
-                    ),
+
+                const SizedBox(width: 12),
+
+                // Increase button
+                AnimatedBuilder(
+                  animation: _scaleAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _scaleAnimation.value,
+                      child: child,
+                    );
+                  },
+                  child: _QuantityButton(
+                    icon: Icons.add,
+                    onPressed: () => _handleQuantityChange(widget.onIncrease),
+                    colorScheme: colorScheme,
                   ),
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final ColorScheme colorScheme;
+
+  const _QuantityButton({
+    required this.icon,
+    required this.onPressed,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      shape: const CircleBorder(),
+      clipBehavior: Clip.hardEdge,
+      color: colorScheme.primary.withOpacity(0.1),
+      child: InkWell(
+        onTap: onPressed,
+        splashColor: colorScheme.primary.withOpacity(0.2),
+        highlightColor: colorScheme.primary.withOpacity(0.1),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(
+            icon,
+            size: 20,
+            color: colorScheme.primary,
+          ),
         ),
       ),
     );

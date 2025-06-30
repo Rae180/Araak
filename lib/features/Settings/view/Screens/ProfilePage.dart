@@ -17,7 +17,7 @@ class ProfilePage extends StatelessWidget {
       create: (context) =>
           SettingsBloc(client: NetworkApiServiceHttp())..add(LoadUserData()),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,

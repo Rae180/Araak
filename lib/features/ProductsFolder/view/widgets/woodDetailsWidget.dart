@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:start/core/constants/app_constants.dart';
 
 class WoodDetailsWidget extends StatelessWidget {
   final num? woodLength;
@@ -17,10 +18,9 @@ class WoodDetailsWidget extends StatelessWidget {
     required this.woodColor,
   }) : super(key: key);
 
-  // Maps common color names to a Flutter Color.
   Color _getColorFromName(String? colorName) {
     if (colorName == null) return Colors.grey;
-    final Map<String, Color> colorMap = {
+    const colorMap = {
       'red': Colors.red,
       'green': Colors.green,
       'blue': Colors.blue,
@@ -33,138 +33,139 @@ class WoodDetailsWidget extends StatelessWidget {
       'gray': Colors.grey,
       'black': Colors.black,
       'white': Colors.white,
-      'olive': Colors.green, // Adjust mapping as needed.
-      // Add additional mappings as required.
+      'beige': Color(0xFFF5F5DC),
+      'olive': Color(0xFF808000),
     };
     return colorMap[colorName.toLowerCase()] ?? Colors.grey;
   }
 
-  /// Widget builder for detail rows
-  Widget _buildDetailRow({
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final displayWoodColor = _getColorFromName(woodColor);
+
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.sectionPadding),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+        border: Border.all(
+          color: colorScheme.onSurface.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppLocalizations.of(context)!.wooddet,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: AppConstants.elementSpacing),
+          _buildDetailRow(
+            context,
+            icon: Icons.straighten,
+            label: AppLocalizations.of(context)!.length,
+            value: woodLength != null ? "$woodLength cm" : "N/A",
+          ),
+          const SizedBox(height: AppConstants.elementSpacing / 2),
+          _buildDetailRow(
+            context,
+            icon: Icons.straighten,
+            label: AppLocalizations.of(context)!.width,
+            value: woodWidth != null ? "$woodWidth cm" : "N/A",
+          ),
+          const SizedBox(height: AppConstants.elementSpacing / 2),
+          _buildDetailRow(
+            context,
+            icon: Icons.linear_scale,
+            label: AppLocalizations.of(context)!.hieght,
+            value: woodHeight != null ? "$woodHeight cm" : "N/A",
+          ),
+          const SizedBox(height: AppConstants.elementSpacing / 2),
+          _buildDetailRow(
+            context,
+            icon: Icons.category,
+            label: AppLocalizations.of(context)!.type,
+            value: woodType ?? "N/A",
+          ),
+          const SizedBox(height: AppConstants.elementSpacing / 2),
+          _buildColorRow(context, displayWoodColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 20, color: Colors.brown),
+        Icon(icon, size: 20, color: colorScheme.primary),
         const SizedBox(width: 8),
         Text(
           "$label: ",
-          style: const TextStyle(
-            fontFamily: 'Times New Roman',
-            fontSize: 16,
+          style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: colorScheme.onSurface.withOpacity(0.8),
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Times New Roman',
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
           ),
         ),
       ],
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final Color displayWoodColor = _getColorFromName(woodColor);
+  Widget _buildColorRow(BuildContext context, Color displayColor) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.grey.shade100],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Row(
+      children: [
+        Icon(Icons.color_lens, size: 20, color: colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          "${l10n.color}: ",
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface.withOpacity(0.8),
           ),
-          borderRadius: BorderRadius.circular(16),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-             Text(
-              AppLocalizations.of(context)!.wooddet,
-              style: TextStyle(
-                fontFamily: 'Times New Roman',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+        Container(
+          width: 20,
+          height: 20,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: displayColor,
+            border: Border.all(
+              color: colorScheme.onSurface.withOpacity(0.2),
             ),
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              icon: Icons.straighten,
-              label: AppLocalizations.of(context)!.length,
-              value: woodLength != null ? "$woodLength cm" : "N/A",
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              icon: Icons.straighten,
-              label: AppLocalizations.of(context)!.width,
-              value: woodWidth != null ? "$woodWidth cm" : "N/A",
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              icon: Icons.linear_scale,
-              label: AppLocalizations.of(context)!.hieght,
-              value: woodHeight != null ? "$woodHeight cm" : "N/A",
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              icon: Icons.category,
-              label: AppLocalizations.of(context)!.type,
-              value: woodType ?? "N/A",
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.color_lens, color: Colors.brown, size: 20),
-                const SizedBox(width: 8),
-                 Text(
-                  "${AppLocalizations.of(context)!.color}: ",
-                  style: TextStyle(
-                    fontFamily: 'Times New Roman',
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: displayWoodColor.withOpacity(0.9),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  woodColor != null ? woodColor!.toUpperCase() : "N/A",
-                  style: const TextStyle(
-                    fontFamily: 'Times New Roman',
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-      ),
+        Text(
+          woodColor != null ? woodColor!.toUpperCase() : "N/A",
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+          ),
+        ),
+      ],
     );
   }
 }

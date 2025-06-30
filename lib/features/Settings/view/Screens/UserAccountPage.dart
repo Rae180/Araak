@@ -161,6 +161,7 @@ class _ModAccountState extends State<ModAccount> {
               : (context.read<SettingsBloc>().state as SettingsSuccess).user;
 
           return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               title:  Text(AppLocalizations.of(context)!.editaccount,
                   style: TextStyle(
