@@ -4,7 +4,7 @@ class SignUpEvent {}
 
 final class SignupUserEvent extends SignUpEvent {
   final User user;
+  final String fcm;
 
-  SignupUserEvent({required this.user});
-
+  SignupUserEvent({required this.user,required this.fcm});
 }

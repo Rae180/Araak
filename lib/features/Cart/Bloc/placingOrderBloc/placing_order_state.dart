@@ -18,7 +18,13 @@ final class DeliveryPriceSuccessState extends PlacingOrderState {
   DeliveryPriceSuccessState({required this.deliveryPrice});
 }
 
-final class PlacingAnOrderWithDeliverySuccess extends PlacingOrderState{}
+final class PlacingAnOrderWithDeliverySuccess extends PlacingOrderState {}
+
+final class PlacingAnOrderPickupSuccess extends PlacingOrderState {
+  final PlacingOrderResponse response;
+
+  PlacingAnOrderPickupSuccess({required this.response});
+}
 
 final class PlacingOrderError extends PlacingOrderState {
   final String message;

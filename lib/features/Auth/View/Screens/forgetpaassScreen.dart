@@ -50,14 +50,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    'Reset password',
+                    l10n.resetpass,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Reset password Instructions',
+                    l10n.resetpassinstruction,
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 32),
@@ -84,7 +84,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             if (!RegExp(
                                     r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
                                 .hasMatch(value)) {
-                              return 'l10n.invalidEmail';
+                              return l10n.invalidemail;
                             }
                             return null;
                           },
@@ -96,7 +96,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               // Implement password reset logic
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('l10n.resetLinkSent'),
+                                  content: Text(l10n.resentlink),
                                 ),
                               );
                             }
@@ -107,7 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             minimumSize: const Size(double.infinity, 54),
                           ),
                           child: Text(
-                            ' l10n.sendResetLink',
+                            l10n.sendresentlink,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -119,7 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: Text(
-                              'l10n.backToLogin',
+                              l10n.backtologin,
                               style: TextStyle(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.w600,

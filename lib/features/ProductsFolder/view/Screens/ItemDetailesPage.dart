@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:like_button/like_button.dart';
@@ -86,8 +88,13 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
               );
             } else if (state is ItemDetailesSuccess) {
               final item = state.item.item!;
-              final feedbacks = state.item.ratings ?? [];
-              final itemDetails = state.item.itemDetails?.first;
+              final feedbacks = state.item.ratings
+                      ?.where((r) => r.feedback != null)
+                      .toList() ??
+                  [];
+              final itemDetails = state.item.itemDetails?.isNotEmpty == true
+                  ? state.item.itemDetails!.first
+                  : null;
 
               return Stack(
                 children: [
@@ -357,7 +364,8 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                     final feedback = feedbacks[index];
                                     return _buildFeedbackItem(
                                       context,
-                                      customerName: feedback.customer?.name,
+                                      customerName: feedback.customer?.name ??
+                                          l10n.anonymous,
                                       customerImage:
                                           feedback.customer?.imageUrl,
                                       rate: feedback.rate,
@@ -386,7 +394,7 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                            content: Text('l10n.addedtocart'),
+                                            content: Text(l10n.addedtocart),
                                             backgroundColor:
                                                 colorScheme.primary,
                                           ),
@@ -454,6 +462,7 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,7 +484,7 @@ class _ItemDetailesPageState extends State<ItemDetailesPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                customerName ?? 'Anonymous',
+                customerName ?? l10n.anonymous,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

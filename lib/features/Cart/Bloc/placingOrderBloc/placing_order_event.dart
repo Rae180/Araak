@@ -26,3 +26,10 @@ final class PlacingAnOrderWithDeliveryEvent extends PlacingOrderEvent {
   PlacingAnOrderWithDeliveryEvent(
       {required this.longitude, required this.latitude, required this.address});
 }
+
+final class PlacingOrderPickupEvent extends PlacingOrderEvent {
+  final num latitude;
+  final num longitude;
+
+  PlacingOrderPickupEvent({required this.latitude, required this.longitude});
+}

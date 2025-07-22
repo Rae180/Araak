@@ -7,7 +7,8 @@ import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/core/constants/app_constants.dart';
 import 'package:start/features/Cart/Bloc/CartBloc/cart_bloc.dart';
 import 'package:start/features/Cart/Bloc/placingOrderBloc/placing_order_bloc.dart';
-import 'package:start/features/Cart/Models/CartItem.dart';
+import 'package:start/features/Cart/Models/CartItem.dart' as cart_model;
+import 'package:start/features/Cart/Models/PlacingOrderSuccess.dart';
 import 'package:start/features/Cart/view/Screens/MapPickerScreen.dart';
 import 'package:start/features/Cart/view/widgets/CartItemWidget.dart';
 import 'package:start/features/Cart/view/widgets/CartRoomWidget.dart';
@@ -27,23 +28,8 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
   late AnimationController _emptyCartController;
-  late Animation<double> _emptyCartAnimation;
-  bool _isCheckoutLoading = false;
-  bool _isLocationLoading = false;
-  bool _isPaymentProcessing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _emptyCartController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _emptyCartAnimation = CurvedAnimation(
-      parent: _emptyCartController,
-      curve: Curves.easeInOut,
-    );
-  }
+  double? userLat;
+  double? userLng;
 
   @override
   void dispose() {
@@ -83,12 +69,9 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
     };
   }
 
-  void _showNearestBranchDialog(
+  void _showOrderConfirmationDialog(
     BuildContext context,
-    String branchAddress,
-    double distance,
-    double branchLat,
-    double branchLng,
+    PlacingOrderResponse response,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -96,141 +79,272 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.cardRadius)),
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+        ),
         backgroundColor: colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.sectionPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
+              // Success icon
               Icon(
-                Icons.location_on,
-                size: 48,
-                color: colorScheme.primary,
+                Icons.check_circle,
+                size: 72,
+                color: Colors.green,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+
+              // Title
               Text(
-                l10n.nearbranch,
-                style: theme.textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Map preview
-              Container(
-                height: 180,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                  border: Border.all(color: colorScheme.outline),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: LatLng(branchLat, branchLng),
-                      initialZoom: 15,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.example.app',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: LatLng(branchLat, branchLng),
-                            width: 40,
-                            height: 40,
-                            child: Icon(
-                              Icons.location_pin,
-                              color: colorScheme.error,
-                              size: 40,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                l10n.confirmation, // Fixed: removed quotes
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
-              // Address and distance
-              ListTile(
-                leading: Icon(Icons.place, color: colorScheme.primary),
-                title: Text(
-                  branchAddress,
-                  style: theme.textTheme.bodyLarge,
+              // Order summary
+              if (response.order != null) ...[
+                _buildOrderDetailRow(
+                  context,
+                  l10n.orderid, // Fixed: removed quotes
+                  "#${response.order!.id}",
                 ),
-                subtitle: Text(
-                  "${distance.toStringAsFixed(1)} ${'l10n.kmaway'}",
-                  style: theme.textTheme.bodyMedium,
+                const SizedBox(height: 8),
+                _buildOrderDetailRow(
+                  context,
+                  l10n.total, // Fixed: removed quotes
+                  "${response.priceDetails?.totalPrice} SAR",
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                _buildOrderDetailRow(
+                  context,
+                  l10n.deposit, // Fixed: removed quotes
+                  "${response.priceDetails?.rabbon} SAR",
+                ),
+                const SizedBox(height: 8),
+                _buildOrderDetailRow(
+                  context,
+                  l10n.remaininamount, // Fixed: removed quotes
+                  "${response.priceDetails?.remainingAmount} SAR",
+                ),
+                const SizedBox(height: 16),
+              ],
 
-              // Payment button with loading state
-              StatefulBuilder(
-                builder: (context, setState) {
-                  return ElevatedButton(
-                    onPressed: _isPaymentProcessing
-                        ? null
-                        : () async {
-                            setState(() => _isPaymentProcessing = true);
-                            await Future.delayed(const Duration(seconds: 2));
-                            setState(() => _isPaymentProcessing = false);
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('l10n.paymentsuccess'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    child: _isPaymentProcessing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text('l10n.paywithstripe'),
-                  );
+              // Branch info
+              if (response.nearestBranch != null) ...[
+                Divider(),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.pickuplocation, // Fixed: removed quotes
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.store, color: colorScheme.primary),
+                  title: Text(response.nearestBranch!.name!),
+                  subtitle: Text(response.nearestBranch!.address!),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Close button
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
                 },
-              ),
-              const SizedBox(height: 12),
-
-              // Action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(l10n.cancel),
-                  ),
-                  const SizedBox(width: 12),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceVariant,
-                    ),
-                    child: Text(l10n.confirmation),
-                  ),
-                ],
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48), // Added const
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                ),
+                child: Text(l10n.close), // Fixed: removed quotes
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderDetailRow(
+      BuildContext context, String title, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      ],
+    );
+  }
+
+  void _showNearestBranchDialog(
+    BuildContext context,
+    String branchAddress,
+    double distance,
+    double? branchLat,
+    double? branchLng,
+    double userLat, // Added missing parameter
+    double userLng, // Added missing parameter
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    showDialog(
+      context: context,
+      builder: (context) => BlocProvider(
+        create: (context) => PlacingOrderBloc(client: NetworkApiServiceHttp()),
+        child: BlocConsumer<PlacingOrderBloc, PlacingOrderState>(
+          listener: (context, state) {
+            if (state is PlacingAnOrderPickupSuccess) {
+              Navigator.pop(context); // Close branch dialog
+              _showOrderConfirmationDialog(
+                  context, state.response); // Show confirmation
+            } else if (state is PlacingOrderError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+          builder: (context, state) {
+            // Null check for coordinates
+            final lat = branchLat ?? 0.0;
+            final lng = branchLng ?? 0.0;
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+              ),
+              backgroundColor: colorScheme.surface,
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.sectionPadding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Icon(
+                      Icons.location_on,
+                      size: 48,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.nearbranch,
+                      style: theme.textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Map preview
+                    Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(AppConstants.cardRadius),
+                        border: Border.all(color: colorScheme.outline),
+                      ),
+                      child: ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(AppConstants.cardRadius),
+                        child: FlutterMap(
+                          options: MapOptions(
+                            initialCenter:
+                                LatLng(lat, lng), // Use checked values
+                            initialZoom: 15,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.example.app',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(lat, lng), // Use checked values
+                                  width: 40,
+                                  height: 40,
+                                  child: Icon(
+                                    Icons.location_pin,
+                                    color: colorScheme.error,
+                                    size: 40,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Address and distance
+                    ListTile(
+                      leading: Icon(Icons.place, color: colorScheme.primary),
+                      title: Text(
+                        branchAddress,
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                      subtitle: Text(
+                        "${distance.toStringAsFixed(1)} ${'km'}", // Fixed: removed quotes
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Action buttons
+                    if (state is PlacingOrderLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: CircularProgressIndicator(),
+                      )
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(l10n.cancel),
+                          ),
+                          const SizedBox(width: 12),
+                          TextButton(
+                            onPressed: () {
+                              context.read<PlacingOrderBloc>().add(
+                                    PlacingOrderPickupEvent(
+                                      latitude: userLat,
+                                      longitude: userLng,
+                                    ),
+                                  );
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor: colorScheme.surfaceVariant,
+                            ),
+                            child: Text(l10n.confirmation),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -334,7 +448,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                                 controller: mapController,
                                 decoration: InputDecoration(
                                   labelText: selectedLocation != null
-                                      ? 'l10n.locationselected'
+                                      ? l10n.locationselected
                                       : l10n.selectonmap,
                                   suffixIcon: const Icon(Icons.map),
                                   border: OutlineInputBorder(
@@ -352,7 +466,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                             controller: addressController,
                             decoration: InputDecoration(
                               labelText: l10n.enteraddress,
-                              hintText: 'l10n.addresshint',
+                              hintText: l10n.adresshint,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(
                                     AppConstants.cardRadius),
@@ -364,41 +478,45 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                           // Calculate price button
                           SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: isCalculatingPrice
-                                  ? null
-                                  : () {
-                                      if (selectedLocation == null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                              content: Text(l10n.selectloca)),
+                            child: Builder(builder: (context) {
+                              return ElevatedButton(
+                                onPressed: isCalculatingPrice
+                                    ? null
+                                    : () {
+                                        if (selectedLocation == null) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(l10n.selectloca)),
+                                          );
+                                          return;
+                                        }
+                                        setState(
+                                            () => isCalculatingPrice = true);
+                                        final bloc =
+                                            context.read<PlacingOrderBloc>();
+                                        bloc.add(
+                                          GetDeliveryPriceEvent(
+                                            address: addressController.text,
+                                            Latitude: latitude!,
+                                            Longitude: longitude!,
+                                          ),
                                         );
-                                        return;
-                                      }
-                                      setState(() => isCalculatingPrice = true);
-                                      BlocProvider.of<PlacingOrderBloc>(context)
-                                          .add(
-                                        GetDeliveryPriceEvent(
-                                          address: addressController.text,
-                                          Latitude: latitude!,
-                                          Longitude: longitude!,
-                                        ),
-                                      );
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              child: isCalculatingPrice
-                                  ? const CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    )
-                                  : Text(l10n.finalprice),
-                            ),
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colorScheme.primary,
+                                  foregroundColor: colorScheme.onPrimary,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: isCalculatingPrice
+                                    ? const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      )
+                                    : Text(l10n.finalprice),
+                              );
+                            }),
                           ),
                           const SizedBox(height: 20),
 
@@ -415,7 +533,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "${'l10n.deliveryprice'}: ",
+                                    "${l10n.deliveryprice}: ",
                                     style: theme.textTheme.bodyLarge,
                                   ),
                                   Text(
@@ -504,7 +622,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                                           .showSnackBar(
                                         SnackBar(
                                             content:
-                                                Text('l10n.calculatefirst')),
+                                                Text(l10n.calculatefirst)),
                                       );
                                       return;
                                     }
@@ -570,15 +688,6 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
     BlocProvider.of<CartBloc>(context).add(GetCartItemsEvent());
     await Future.delayed(
         const Duration(milliseconds: 800)); // Simulate network delay
-  }
-
-  void _handleCheckout() async {
-    setState(() => _isCheckoutLoading = true);
-    await Future.delayed(
-        const Duration(milliseconds: 500)); // Simulate processing
-    setState(() => _isCheckoutLoading = false);
-
-    // ... existing checkout logic ...
   }
 
   void _showOrderMethodDialog(BuildContext context) {
@@ -650,7 +759,11 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                               state.nearBranch.branch!.address!,
                               state.nearBranch.branch!.distanceKm!,
                               double.parse(state.nearBranch.branch!.latitude!),
-                              double.parse(state.nearBranch.branch!.longitude!),
+                              double.parse(
+                                state.nearBranch.branch!.longitude!,
+                              ),
+                              userLat!,
+                              userLng!,
                             );
                           });
                         } else if (state is PlacingOrderError) {
@@ -660,30 +773,33 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                       },
                       child: SizedBox(
                         width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            try {
-                              Map<String, double> coordinates =
-                                  await getUserCoordinates();
-                              double lat = coordinates['latitude']!;
-                              double lng = coordinates['longitude']!;
+                        child: Builder(builder: (context) {
+                          return OutlinedButton.icon(
+                            onPressed: () async {
+                              try {
+                                Map<String, double> coordinates =
+                                    await getUserCoordinates();
+                                userLat = coordinates['latitude']!;
+                                userLng = coordinates['longitude']!;
 
-                              BlocProvider.of<PlacingOrderBloc>(context).add(
-                                  GetNearestBranchEvent(
-                                      longitue: lng, latitude: lat));
-                            } catch (e) {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(content: Text("$e")));
-                            }
-                          },
-                          icon: Icon(Icons.person_pin_circle,
-                              color: colorScheme.primary),
-                          label: Text(l10n.colllectorder),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(color: colorScheme.outline),
-                          ),
-                        ),
+                                BlocProvider.of<PlacingOrderBloc>(context).add(
+                                    GetNearestBranchEvent(
+                                        longitue: userLng!,
+                                        latitude: userLat!));
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("$e")));
+                              }
+                            },
+                            icon: Icon(Icons.person_pin_circle,
+                                color: colorScheme.primary),
+                            label: Text(l10n.colllectorder),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: colorScheme.outline),
+                            ),
+                          );
+                        }),
                       ),
                     ),
                   ],
@@ -751,7 +867,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('l10n.subtotal',
+                        Text(l10n.total,
                             style: theme.textTheme.bodyMedium),
                         Text(
                           "\$${state.item.totalPrice!.toStringAsFixed(2)}",
@@ -765,7 +881,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                       children: [
                         Text(l10n.totaltime, style: theme.textTheme.bodyMedium),
                         Text(
-                          "${state.item.totalTime ?? '45'} ${'l10n.minutes'}",
+                          "${state.item.totalTime ?? '45'} ${l10n.minutes}",
                           style: theme.textTheme.bodyLarge,
                         ),
                       ],
@@ -865,6 +981,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
               } else if (state is GetCartItemsSuccess) {
                 final cartRooms = state.item.rooms ?? [];
                 final cartItems = state.item.items ?? [];
+
                 final combinedList = <dynamic>[];
                 combinedList.addAll(cartRooms);
                 combinedList.addAll(cartItems);
@@ -900,15 +1017,16 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                                     onDismissed: (direction) {
                                       BlocProvider.of<CartBloc>(context).add(
                                         RemoveFromCartEvent(
-                                            roomId:
-                                                item is Rooms ? item.id : null,
+                                            roomId: item is cart_model.Rooms
+                                                ? item.id
+                                                : null,
                                             itemId:
                                                 item is Items ? item.id : null,
                                             custId: null,
                                             roomCustId: null,
-                                            count: item is Rooms
+                                            count: item is cart_model.Rooms
                                                 ? item.count
-                                                : item is Items
+                                                : item is cart_model.Items
                                                     ? item.count
                                                     : null),
                                       );
@@ -946,7 +1064,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                                       );
                                       return result;
                                     },
-                                    child: item is Items
+                                    child: item is cart_model.Items
                                         ? CartItemWidget(
                                             onTap: () {
                                               Navigator.of(context).push(
@@ -977,7 +1095,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                                                     count: 1),
                                               );
                                             })
-                                        : item is Rooms
+                                        : item is cart_model.Rooms
                                             ? CartRoomWidget(
                                                 onTap: () {
                                                   Navigator.of(context).push(
@@ -1056,7 +1174,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 24),
           Text(
-            'l10n.cartempty',
+            l10n.cartempty,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -1064,7 +1182,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 12),
           Text(
-            'l10n.additemstocart',
+            l10n.additemscart,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurface.withOpacity(0.7),
@@ -1081,7 +1199,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
               ),
             ),
             child: Text(
-              'l10n.continueshopping',
+              l10n.continueshopping,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
@@ -1120,7 +1238,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'l10n.subtotal',
+                    l10n.total,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.7),
                     ),
@@ -1146,7 +1264,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${state.item.totalTime ?? '45'} ${'l10n.minutes'}",
+                    "${state.item.totalTime ?? '45'} ${l10n.minutes}",
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,

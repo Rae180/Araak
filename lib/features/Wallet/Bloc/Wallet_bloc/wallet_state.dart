@@ -12,6 +12,12 @@ final class WalletBalanceSuccess extends WalletState {
   WalletBalanceSuccess({required this.wallet});
 }
 
+final class TransactionsGetSuccess extends WalletState {
+  final Transactions transactions;
+
+  TransactionsGetSuccess({required this.transactions});
+}
+
 final class TopUpWalletSuccess extends WalletState {}
 
 final class WalletErrorState extends WalletState {

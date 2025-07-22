@@ -7,6 +7,7 @@ import 'package:start/core/api_service/base_repo.dart';
 import 'package:start/core/constants/api_constants.dart';
 import 'package:start/core/errors/failures.dart';
 import 'package:start/features/Cart/Models/NearBranch.dart';
+import 'package:start/features/Cart/Models/PlacingOrderSuccess.dart';
 
 part 'placing_order_event.dart';
 part 'placing_order_state.dart';
@@ -71,6 +72,25 @@ class PlacingOrderBloc extends Bloc<PlacingOrderEvent, PlacingOrderState> {
         emit(PlacingAnOrderWithDeliverySuccess());
       });
     });
+    on<PlacingOrderPickupEvent>(((event, emit) async {
+      final result = await BaseRepo.repoRequest(request: () async {
+        final response = await client.postRequestAuth(
+            url: ApiConstants.confirmcart,
+            jsonBody: {
+              "want_delivery": "no",
+              "latitude": event.latitude,
+              "longitude": event.longitude
+            });
+        final Map<String, dynamic> data = jsonDecode(response);
+        final placingorder = PlacingOrderResponse.fromJson(data);
+        return placingorder;
+      });
+      result.fold((f) {
+        emit(_mapFailureToState(f));
+      }, (responseData) {
+        emit(PlacingAnOrderPickupSuccess(response: responseData));
+      });
+    }));
   }
 
   _mapFailureToState(Failure f) {

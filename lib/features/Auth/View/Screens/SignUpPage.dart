@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -24,6 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _confirmController = TextEditingController();
   final _phoneNumController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  late String _fcmToken = '';
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   File? _profileImage;
@@ -32,8 +34,17 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   void initState() {
-    super.initState();
+    _getFcmToken();
     _signUpBloc = SignUpBloc(client: NetworkApiServiceHttp());
+  }
+
+  Future<void> _getFcmToken() async {
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      setState(() {
+        _fcmToken = token;
+      });
+    }
   }
 
   @override
@@ -92,7 +103,7 @@ class _SignUpPageState extends State<SignUpPage> {
         phoneNumber: _phoneNumController.text,
         profileImage: _profileImage,
       );
-      _signUpBloc.add(SignupUserEvent(user: user));
+      _signUpBloc.add(SignupUserEvent(user: user,fcm: _fcmToken));
     }
   }
 
@@ -252,9 +263,9 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget _buildEmailField(ThemeData theme, AppLocalizations l10n) {
     return TextFormField(
       validator: (value) {
-        if (value == null || value.isEmpty) return 'l10n.emailRequired';
+        if (value == null || value.isEmpty) return l10n.emailrequir;
         if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-            .hasMatch(value)) return 'l10n.invalidEmail';
+            .hasMatch(value)) return l10n.invalidemail;
         return null;
       },
       keyboardType: TextInputType.emailAddress,
@@ -272,9 +283,9 @@ class _SignUpPageState extends State<SignUpPage> {
     return TextFormField(
       keyboardType: TextInputType.phone,
       validator: (value) {
-        if (value == null || value.isEmpty) return 'l10n.phoneRequired';
+        if (value == null || value.isEmpty) return l10n.phonerequire;
         if (!RegExp(r'^[0-9]{10,}$').hasMatch(value)) {
-          return 'l10n.invalidPhone';
+          return l10n.invalidphone;
         }
         return null;
       },
@@ -306,8 +317,8 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) return 'l10n.passwordRequired';
-        if (value.length < 6) return 'l10n.passwordLengthError';
+        if (value == null || value.isEmpty) return l10n.passrequired;
+        if (value.length < 6) return l10n.passwordlength;
         return null;
       },
     );
@@ -333,8 +344,8 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) return 'l10n.confirmPassRequired';
-        if (value != _passwordController.text) return 'l10n.passwordsDontMatch';
+        if (value == null || value.isEmpty) return l10n.confirmpassrequired;
+        if (value != _passwordController.text) return l10n.passwoddontmatch;
         return null;
       },
     );

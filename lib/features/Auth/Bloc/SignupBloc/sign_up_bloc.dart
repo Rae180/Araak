@@ -32,6 +32,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
             "password": event.user.password,
             "C_password": event.user.C_password,
             "phone_number": event.user.phoneNumber,
+            "fcm_token":event.fcm
           },
           file: event.user.profileImage,
         );

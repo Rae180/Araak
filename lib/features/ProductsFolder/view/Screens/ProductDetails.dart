@@ -30,14 +30,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     if (url.contains('localhost')) {
       return url.replaceAll('localhost', ApiConstants.STORAGE_URL);
     }
+    if (!url.startsWith('http')) {
+      return '${ApiConstants.STORAGE_URL}/$url';
+    }
     return url;
   }
 
-  Widget _buildRatingStars(num rating) {
+  Widget _buildRatingStars(num? rating) {
+    final effectiveRating = rating ?? 0.0;
     return Row(
       children: List.generate(5, (index) {
         return Icon(
-          index < rating.floor() ? Icons.star : Icons.star_border,
+          index < effectiveRating.floor() ? Icons.star : Icons.star_border,
           color: Colors.amber,
           size: 20,
         );
@@ -113,18 +117,26 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               );
             } else if (state is RoomDetailsSuccess) {
               final room = state.room.room!;
+              if (room == null) {
+                return Center(child: Text('l10n.noDetailsAvailable'));
+              }
               final items = room.items ?? [];
               final feedbacks = state.room.ratings ?? [];
               final fabrics = state.room.fabrics ?? [];
               final List<String> allFabricColors = getAllFabricColors(fabrics);
+              final imageUrl = getValidImageUrl(room.imageUrl);
+              final name = room.name ?? l10n.unnamedproduct;
+              final description = room.description ?? l10n.nodescription;
+              final price = room.price ?? 0.0;
+              final rating = room.averageRating ?? 0.0;
 
               return Stack(
                 children: [
                   // Hero image with gradient overlay
                   Hero(
-                    tag: 'product-${room.id}',
+                    tag: 'product-${room.id ?? "unknown"}',
                     child: CachedNetworkImage(
-                      imageUrl: getValidImageUrl(room.imageUrl),
+                      imageUrl: imageUrl,
                       imageBuilder: (context, imageProvider) => Container(
                         height: MediaQuery.of(context).size.height * 0.45,
                         decoration: BoxDecoration(
@@ -226,7 +238,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      room.name!,
+                                      name,
                                       style: theme.textTheme.headlineSmall
                                           ?.copyWith(
                                         fontWeight: FontWeight.bold,
@@ -277,10 +289,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               // Rating row
                               Row(
                                 children: [
-                                  _buildRatingStars(room.averageRating!),
+                                  _buildRatingStars(rating),
                                   const SizedBox(width: 8),
                                   Text(
-                                    room.averageRating!.toStringAsFixed(1),
+                                    rating.toStringAsFixed(1),
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurface
                                           .withOpacity(0.7),
@@ -291,78 +303,81 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               const SizedBox(height: 16),
 
                               // Customize button
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          CustomizationsPage(id: room.id),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.settings,
-                                  color: colorScheme.onPrimary,
-                                ),
-                                label: Text(
-                                  l10n.assignment,
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.onPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: colorScheme.primary,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                        AppConstants.cardRadius),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Colors section
-                              Text(
-                                l10n.colors,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: List.generate(
-                                  allFabricColors.length,
-                                  (index) {
-                                    final colorName = allFabricColors[index];
-                                    final swatchColor =
-                                        getColorFromName(colorName);
-                                    return Tooltip(
-                                      message: colorName,
-                                      child: Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: swatchColor,
-                                          border: Border.all(
-                                            width: 1,
-                                            color: colorScheme.onSurface
-                                                .withOpacity(0.1),
-                                          ),
-                                        ),
+                              if (room.id != null)
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CustomizationsPage(id: room.id!),
                                       ),
                                     );
                                   },
+                                  icon: Icon(
+                                    Icons.settings,
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                  label: Text(
+                                    l10n.assignment,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      color: colorScheme.onPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: colorScheme.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          AppConstants.cardRadius),
+                                    ),
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 24),
+
+                              // Colors section
+                              if (allFabricColors.isNotEmpty) ...[
+                                Text(
+                                  l10n.colors,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: List.generate(
+                                    allFabricColors.length,
+                                    (index) {
+                                      final colorName = allFabricColors[index];
+                                      final swatchColor =
+                                          getColorFromName(colorName);
+                                      return Tooltip(
+                                        message: colorName,
+                                        child: Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: swatchColor,
+                                            border: Border.all(
+                                              width: 1,
+                                              color: colorScheme.onSurface
+                                                  .withOpacity(0.1),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
 
                               // Description section with expandable text
                               Text(
@@ -373,7 +388,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               ),
                               const SizedBox(height: 8),
                               ExpandableText(
-                                text: room.description!,
+                                text: description,
                                 maxLines: 4,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onSurface.withOpacity(0.8),
@@ -450,7 +465,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '\$${room.price}',
+                                    '\$$price',
                                     style:
                                         theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
@@ -607,6 +622,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,7 +644,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                customerName ?? 'Anonymous',
+                customerName ?? l10n.anonymous,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

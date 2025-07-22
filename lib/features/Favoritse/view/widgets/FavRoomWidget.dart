@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:start/core/constants/app_constants.dart';
 import 'package:start/core/managers/theme_manager.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FavRoomWidget extends StatefulWidget {
   final String imageUrl;
@@ -69,12 +70,14 @@ class _FavRoomWidgetState extends State<FavRoomWidget>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDarkMode = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
       onTap: widget.details,
       borderRadius: BorderRadius.circular(AppConstants.cardRadius),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: AppConstants.elementSpacing / 2),
+        margin: const EdgeInsets.symmetric(
+            vertical: AppConstants.elementSpacing / 2),
         padding: const EdgeInsets.all(AppConstants.elementSpacing),
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -134,9 +137,9 @@ class _FavRoomWidgetState extends State<FavRoomWidget>
                 ),
               ),
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // Content area
             Expanded(
               child: Column(
@@ -166,9 +169,9 @@ class _FavRoomWidgetState extends State<FavRoomWidget>
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Rating and likes
                   Row(
                     children: [
@@ -195,7 +198,7 @@ class _FavRoomWidgetState extends State<FavRoomWidget>
                 ],
               ),
             ),
-            
+
             // Action buttons
             Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,12 +216,12 @@ class _FavRoomWidgetState extends State<FavRoomWidget>
                     onPressed: _handleBookmarkTap,
                     icon: const Icon(Icons.bookmark, size: 24),
                     color: colorScheme.primary,
-                    tooltip: 'Remove bookmark',
+                    tooltip: l10n.removebookmark,
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Add to cart button
                 Container(
                   decoration: BoxDecoration(

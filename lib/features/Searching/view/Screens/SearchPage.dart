@@ -199,8 +199,8 @@ class _SearchPageState extends State<SearchPage> {
       return _buildEmptyState(
         context,
         icon: Icons.search_off_rounded,
-        title: 'l10n.searchSomething',
-        subtitle: 'l10n.findProducts',
+        title: l10n.searchsomething,
+        subtitle: l10n.findproducts,
       );
     }
 
@@ -217,7 +217,7 @@ class _SearchPageState extends State<SearchPage> {
           context,
           icon: Icons.search_off_rounded,
           title: l10n.noitemsfound,
-          subtitle: 'l10n.tryDifferent',
+          subtitle: l10n.trydiffrent,
         );
       }
 
@@ -270,7 +270,7 @@ class _SearchPageState extends State<SearchPage> {
         context,
         icon: Icons.error_outline_rounded,
         title: l10n.anerrorocc,
-        subtitle: 'l10n.tryAgainLater',
+        subtitle: l10n.tryagainlater,
         isError: true,
       );
     }

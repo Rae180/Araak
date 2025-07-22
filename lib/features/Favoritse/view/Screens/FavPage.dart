@@ -89,7 +89,7 @@ class FavPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'l10n.favorites',
+                            l10n.fav,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -102,7 +102,7 @@ class FavPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              "${favRooms.length + favItems.length} ${'l10n.items'}",
+                              "${favRooms.length + favItems.length} ${l10n.items}",
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.primary,
                                 fontWeight: FontWeight.bold,
@@ -142,7 +142,7 @@ class FavPage extends StatelessWidget {
                                       children: [
                                         const Icon(Icons.room, size: 18),
                                         const SizedBox(width: 8),
-                                        Text('l10n.rooms'),
+                                        Text(l10n.rooms),
                                         const SizedBox(width: 4),
                                         if (favRooms.isNotEmpty)
                                           Container(
@@ -172,7 +172,7 @@ class FavPage extends StatelessWidget {
                                         const Icon(Icons.shopping_bag,
                                             size: 18),
                                         const SizedBox(width: 8),
-                                        Text('l10n.items'),
+                                        Text(l10n.items),
                                         const SizedBox(width: 4),
                                         if (favItems.isNotEmpty)
                                           Container(
@@ -307,7 +307,7 @@ class FavPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'l10n.emptyfav',
+            l10n.emptyfav,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -315,7 +315,7 @@ class FavPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'l10n.addfav',
+            l10n.addfav,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurface.withOpacity(0.7),
@@ -329,7 +329,7 @@ class FavPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
             child: Text(
-              'l10n.explore',
+              l10n.explore,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onPrimary,
               ),
@@ -349,7 +349,7 @@ class FavPage extends StatelessWidget {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          isRoom ? 'l10n.noroomsfav' : 'l10n.noitemsfav',
+          isRoom ? l10n.noroomsfav : l10n.noitemsfav,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),

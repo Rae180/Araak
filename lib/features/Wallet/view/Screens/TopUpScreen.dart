@@ -33,6 +33,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
       ..displayDuration = const Duration(seconds: 3)
       ..indicatorType = EasyLoadingIndicatorType.fadingCircle
       ..maskType = EasyLoadingMaskType.custom
+      ..maskColor = Colors.black.withOpacity(0.4)
       ..backgroundColor = Colors.black.withOpacity(0.7)
       ..indicatorColor = Colors.white
       ..textColor = Colors.white;
@@ -42,13 +43,13 @@ class _TopUpScreenState extends State<TopUpScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (!_cardFormController.details.complete) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AppLocalizations.of(context)!.completecard')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.completedcard)),
       );
       return;
     }
 
     setState(() => _isProcessing = true);
-    EasyLoading.show(status: 'AppLocalizations.of(context)!.processing');
+    EasyLoading.show(status: AppLocalizations.of(context)!.processing);
 
     try {
       final token = await Stripe.instance.createToken(
@@ -107,7 +108,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
       child: BlocListener<WalletBloc, WalletState>(
         listener: (context, state) {
           if (state is TopUpWalletSuccess) {
-            EasyLoading.showSuccess('l10n.topupsuccess');
+            EasyLoading.showSuccess(l10n.topupsuccess);
             setState(() => _isProcessing = false);
             Navigator.pop(context);
           } else if (state is WalletErrorState) {
@@ -122,7 +123,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
           backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
             title: Text(
-              'l10n.topupwallet',
+              l10n.topupwallet,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -143,7 +144,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 children: [
                   // Header
                   Text(
-                    'l10n.addfunds',
+                    l10n.addfunds,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,
@@ -160,7 +161,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
                   // Amount input
                   Text(
-                    'l10n.amount',
+                    l10n.amount,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,
@@ -170,7 +171,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                   TextFormField(
                     controller: _amountController,
                     decoration: InputDecoration(
-                      hintText: 'l10n.amountcents',
+                      hintText: l10n.amountcents,
                       prefixIcon: const Icon(Icons.attach_money),
                       border: OutlineInputBorder(
                         borderRadius:
@@ -184,7 +185,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'l10n.enteramount';
+                        return l10n.enteramount;
                       }
                       final amount = int.tryParse(value) ?? 0;
                       if (amount < 100) {
@@ -260,7 +261,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                               ),
                             )
                           : Text(
-                              'l10n.confirmpayment',
+                              l10n.confirmpay,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -271,7 +272,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
                   // Info text
                   Text(
-                    'l10n.paymentsecure',
+                    l10n.paymentsecure,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.6),
@@ -284,7 +285,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                       Icon(Icons.lock, size: 14, color: colorScheme.primary),
                       const SizedBox(width: 4),
                       Text(
-                        ' l10n.securedstripe',
+                        l10n.securedstripe,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.primary,
                         ),

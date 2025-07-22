@@ -3,10 +3,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/core/constants/app_constants.dart';
 import 'package:start/core/managers/theme_manager.dart';
 import 'package:start/features/Wallet/Bloc/Wallet_bloc/wallet_bloc.dart';
+import 'package:start/features/Wallet/Models/Transactions.dart';
 import 'package:start/features/Wallet/view/Screens/TopUpScreen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -18,7 +20,8 @@ class WalletScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => WalletBloc(client: NetworkApiServiceHttp())
-        ..add(GetWalletBalanceEvent()),
+        ..add(GetWalletBalanceEvent())
+        ..add(GetTransactionsEvent()),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
@@ -138,7 +141,7 @@ class _BalanceCard extends StatelessWidget {
             child: BlocBuilder<WalletBloc, WalletState>(
               builder: (context, state) {
                 if (state is WalletLoading) {
-                  return _buildLoadingState(colorScheme);
+                  return _buildLoadingState(context,colorScheme);
                 } else if (state is WalletBalanceSuccess) {
                   return _buildBalanceState(context, state, colorScheme);
                 } else if (state is WalletErrorState) {
@@ -153,7 +156,8 @@ class _BalanceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingState(ColorScheme colorScheme) {
+  Widget _buildLoadingState(BuildContext context, ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -167,7 +171,7 @@ class _BalanceCard extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          'Loading balance...',
+          l10n.loadingbalance,
           style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
         ),
       ],
@@ -378,12 +382,17 @@ class _TransactionHistory extends StatelessWidget {
               builder: (context, state) {
                 if (state is WalletLoading) {
                   return _buildTransactionShimmer(colorScheme);
-                } else if (state is WalletBalanceSuccess) {
-                  //  return _buildTransactionList(state);
+                } else if (state is TransactionsGetSuccess) {
+                  if (state.transactions.operations == null) {
+                    return Center(
+                      child: Text(l10n.nopasttrans),
+                    );
+                  }
+                  return _buildTransactionList(context, state);
                 } else if (state is WalletErrorState) {
                   return Center(
                     child: Text(
-                      'No transactions available',
+                      l10n.notransava,
                       style: theme.textTheme.bodyMedium,
                     ),
                   );
@@ -434,94 +443,112 @@ class _TransactionHistory extends StatelessWidget {
   }
 }
 
-//   Widget _buildTransactionList(WalletBalanceSuccess state) {
-//     final transactions = state.wallet.transactions ?? [];
-//     final hasTransactions = transactions.isNotEmpty;
+Widget _buildTransactionList(
+    BuildContext context, TransactionsGetSuccess state) {
+  final operations = state.transactions.operations ?? [];
+  final hasOperations = operations.isNotEmpty;
+  final l10n = AppLocalizations.of(context)!;
 
-//     return hasTransactions
-//         ? ListView.separated(
-//             physics: const BouncingScrollPhysics(),
-//             itemCount: transactions.length,
-//             separatorBuilder: (context, index) => Divider(
-//               height: 1,
-//               color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
-//             ),
-//             itemBuilder: (context, index) => _TransactionItem(
-//               transaction: transactions[index],
-//             ),
-//           )
-//         : Center(
-//             child: Column(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 Icon(
-//                   Icons.history,
-//                   size: 60,
-//                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-//                 ),
-//                 const SizedBox(height: 16),
-//                 Text(
-//                   'No transactions yet',
-//                   style: TextStyle(
-//                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           );
-//   }
-// }
+  return hasOperations
+      ? ListView.separated(
+          physics: const BouncingScrollPhysics(),
+          itemCount: operations.length,
+          separatorBuilder: (context, index) => Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+          ),
+          itemBuilder: (context, index) => _TransactionItem(
+            operation:
+                operations[index], // Changed from transaction to operation
+          ),
+        )
+      : Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.history,
+                size: 60,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.notransava,
+                style: TextStyle(
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+        );
+}
 
-// class _TransactionItem extends StatelessWidget {
-//   final Transaction transaction;
+class _TransactionItem extends StatelessWidget {
+  final Operations operation; // Changed from Transactions to Operations
 
-//   const _TransactionItem({required this.transaction});
+  const _TransactionItem({required this.operation}); // Parameter renamed
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     final colorScheme = theme.colorScheme;
-//     final isCredit = transaction.type == 'credit';
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-//     return ListTile(
-//       contentPadding: EdgeInsets.zero,
-//       leading: Container(
-//         width: 50,
-//         height: 50,
-//         decoration: BoxDecoration(
-//           shape: BoxShape.circle,
-//           color: isCredit
-//               ? colorScheme.primaryContainer
-//               : colorScheme.errorContainer,
-//         ),
-//         child: Icon(
-//           isCredit ? Icons.arrow_downward : Icons.arrow_upward,
-//           color: isCredit ? colorScheme.primary : colorScheme.error,
-//         ),
-//       ),
-//       title: Text(
-//         transaction.description ?? (isCredit ? 'Top Up' : 'Payment'),
-//         style: theme.textTheme.bodyLarge?.copyWith(
-//           fontWeight: FontWeight.bold,
-//           color: colorScheme.onSurface,
-//         ),
-//       ),
-//       subtitle: Text(
-//         transaction.date ?? 'Unknown date',
-//         style: theme.textTheme.bodyMedium?.copyWith(
-//           color: colorScheme.onSurface.withOpacity(0.6),
-//         ),
-//       ),
-//       trailing: Text(
-//         '${isCredit ? '+' : '-'}\$${transaction.amount?.toStringAsFixed(2) ?? '0.00'}',
-//         style: theme.textTheme.titleMedium?.copyWith(
-//           color: isCredit ? colorScheme.primary : colorScheme.error,
-//           fontWeight: FontWeight.bold,
-//         ),
-//       ),
-//     );
-//   }
-// }
+    // Determine transaction type based on actual operation.type
+    final isCredit = operation.type == 'deposit' ||
+        operation.type == 'transfer_in' ||
+        operation.type == 'dividend';
+
+    // Parse and format date
+    final date = operation.createdAt != null
+        ? DateFormat('MMM dd, yyyy - HH:mm')
+            .format(DateTime.parse(operation.createdAt!))
+        : 'Unknown date';
+
+    // Format amount with currency symbol
+    final currencySymbol = operation.wallet?.currency == 'EUR' ? '€' : '\$';
+    final formattedAmount = '${isCredit ? '+' : '-'}$currencySymbol'
+        '${(operation.amount!)}';
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isCredit
+              ? colorScheme.primaryContainer
+              : colorScheme.errorContainer,
+        ),
+        child: Icon(
+          isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+          color: isCredit ? colorScheme.primary : colorScheme.error,
+        ),
+      ),
+      title: Text(
+        operation.description ?? 'Transaction', // Use actual description
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: colorScheme.onSurface,
+        ),
+      ),
+      subtitle: Text(
+        date, // Use formatted date
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onSurface.withOpacity(0.6),
+        ),
+      ),
+      trailing: Text(
+        formattedAmount, // Use formatted amount with currency
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: isCredit ? colorScheme.primary : colorScheme.error,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
 
 // Custom painter for dashed line decoration
 class _DashedLinePainter extends CustomPainter {

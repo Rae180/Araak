@@ -168,33 +168,6 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                                       maxLines: 2,
                                     ),
                                   ),
-                                  BlocBuilder<FavBloc, FavState>(
-                                    builder: (context, favState) {
-                                      final isFavorite =
-                                          false; // Add if discount has isFavorite property
-                                      return LikeButton(
-                                        size: 28,
-                                        isLiked: isFavorite,
-                                        onTap: (isLiked) async {
-                                          // Add favorite logic here
-                                          return !isLiked;
-                                        },
-                                        likeBuilder: (bool isLiked) {
-                                          return Icon(
-                                            isLiked
-                                                ? Icons.bookmark
-                                                : Icons
-                                                    .bookmark_border_outlined,
-                                            color: isLiked
-                                                ? Colors.amber
-                                                : colorScheme.onSurface
-                                                    .withOpacity(0.7),
-                                            size: 28,
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
                                 ],
                               ),
                               const SizedBox(height: 12),
@@ -220,7 +193,7 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        "${discount.discountPercentage}% ${'l10n.off'}",
+                                        "${discount.discountPercentage}% ${l10n.off}",
                                         style:
                                             theme.textTheme.bodyLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
@@ -233,7 +206,7 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          "${'l10n.start'}: ${discount.startDate}",
+                                          "${l10n.start}: ${discount.startDate}",
                                           style: theme.textTheme.bodyMedium
                                               ?.copyWith(
                                             color: colorScheme.onSurface
@@ -241,7 +214,7 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
                                           ),
                                         ),
                                         Text(
-                                          "${'l10n.end'}: ${discount.endDate}",
+                                          "${l10n.ends}: ${discount.endDate}",
                                           style: theme.textTheme.bodyMedium
                                               ?.copyWith(
                                             color: colorScheme.onSurface
@@ -282,7 +255,7 @@ class _DiscountDetailsPageState extends State<DiscountDetailsPage> {
 
                               // Included Items Section
                               Text(
-                                'l10n.includedItems',
+                                l10n.includeditems,
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),

@@ -11,7 +11,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // إرسال حدث جلب البيانات مباشرة عند بناء الصفحة
 
     return BlocProvider(
       create: (context) =>
@@ -38,7 +37,7 @@ class ProfilePage extends StatelessWidget {
                 child: CircularProgressIndicator(),
               );
             }
-            // عرض البيانات فقط إذا كانت محملة
+            
             else if (state is SettingsSuccess) {
               return Padding(
                 padding:
@@ -83,7 +82,7 @@ class ProfilePage extends StatelessWidget {
               );
             }
 
-            // إذا لم تكن البيانات محملة بعد، نعيد Container فارغ
+          
             return Container();
           },
         ),

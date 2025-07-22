@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:start/core/constants/app_constants.dart';
 import 'package:start/core/managers/theme_manager.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FavItemWidget extends StatefulWidget {
   final String imageUrl;
@@ -32,20 +33,21 @@ class FavItemWidget extends StatefulWidget {
 
 class _FavItemWidgetState extends State<FavItemWidget>
     with SingleTickerProviderStateMixin {
+  
   late AnimationController _bookmarkController;
   late Animation<double> _bookmarkAnimation;
   bool _isBookmarkAnimating = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Bookmark animation controller
     _bookmarkController = AnimationController(
       duration: AppConstants.hoverDuration,
       vsync: this,
     );
-    
+
     _bookmarkAnimation = TweenSequence<double>(
       [
         TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.5), weight: 40),
@@ -76,6 +78,7 @@ class _FavItemWidgetState extends State<FavItemWidget>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDarkMode = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     // Swipe to dismiss container
     return Dismissible(
@@ -94,16 +97,18 @@ class _FavItemWidgetState extends State<FavItemWidget>
         return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text("Remove Favorite"),
-            content: const Text("Are you sure you want to remove this item from favorites?"),
+            title:  Text(l10n.removefav),
+            content:  Text(
+                l10n.areusureremovefav),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text("Cancel"),
+                child:  Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text("Remove", style: TextStyle(color: Colors.red)),
+                child:
+                     Text(l10n.remove, style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -116,7 +121,8 @@ class _FavItemWidgetState extends State<FavItemWidget>
         onTap: widget.details,
         borderRadius: BorderRadius.circular(AppConstants.cardRadius),
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: AppConstants.elementSpacing / 2),
+          margin: const EdgeInsets.symmetric(
+              vertical: AppConstants.elementSpacing / 2),
           padding: const EdgeInsets.all(AppConstants.elementSpacing),
           decoration: BoxDecoration(
             color: colorScheme.surface,
@@ -146,11 +152,13 @@ class _FavItemWidgetState extends State<FavItemWidget>
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.cardRadius),
                     color: colorScheme.surfaceVariant,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.cardRadius),
                     child: Image.network(
                       widget.imageUrl,
                       fit: BoxFit.cover,
@@ -180,7 +188,7 @@ class _FavItemWidgetState extends State<FavItemWidget>
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Item details
               Expanded(
                 child: Column(
@@ -197,7 +205,7 @@ class _FavItemWidgetState extends State<FavItemWidget>
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     // Price
                     Text(
                       "\$${widget.price.toStringAsFixed(2)}",
@@ -207,20 +215,19 @@ class _FavItemWidgetState extends State<FavItemWidget>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Rating and likes
                     Row(
                       children: [
                         // Star rating
                         _buildRatingStars(widget.averagRating, colorScheme),
                         const SizedBox(width: 12),
-                        
+
                         // Likes
                         Row(
                           children: [
-                            Icon(Icons.favorite, 
-                                color: Colors.red.shade300, 
-                                size: 16),
+                            Icon(Icons.favorite,
+                                color: Colors.red.shade300, size: 16),
                             const SizedBox(width: 4),
                             Text(
                               widget.likecount.toString(),
@@ -235,7 +242,7 @@ class _FavItemWidgetState extends State<FavItemWidget>
                   ],
                 ),
               ),
-              
+
               // Action buttons
               Column(
                 mainAxisSize: MainAxisSize.min,
@@ -253,12 +260,12 @@ class _FavItemWidgetState extends State<FavItemWidget>
                       onPressed: _handleBookmarkTap,
                       icon: const Icon(Icons.bookmark, size: 24),
                       color: colorScheme.primary,
-                      tooltip: 'Remove from favorites',
+                      tooltip: l10n.removefromfav,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Add to cart button with animation
                   _AddToCartButton(
                     onPressed: widget.onTap2,
@@ -308,12 +315,12 @@ class _AddToCartButtonState extends State<_AddToCartButton>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _animation = CurvedAnimation(
       parent: _controller,
       curve: Curves.elasticOut,

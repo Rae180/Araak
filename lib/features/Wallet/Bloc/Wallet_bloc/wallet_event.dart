@@ -13,3 +13,5 @@ final class TopUpWalletEvent extends WalletEvent {
 
   TopUpWalletEvent({required this.token, required this.amount, required this.descriptione, required this.payment_method, required this.currency});
 }
+
+final class GetTransactionsEvent extends WalletEvent{}

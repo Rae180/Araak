@@ -37,7 +37,7 @@ class _OrdersScreenState extends State<OrdersScreen>
 
   String _formatDuration(BuildContext context, String? durationString) {
     if (durationString == null || durationString.isEmpty)
-      return 'AppLocalizations.of(context)!.completed';
+      return AppLocalizations.of(context)!.completed;
 
     try {
       Duration d;
@@ -55,15 +55,15 @@ class _OrdersScreenState extends State<OrdersScreen>
       final l10n = AppLocalizations.of(context)!;
 
       if (d.inHours > 24) {
-        return '${d.inDays}${'l10n.days'} ${d.inHours.remainder(24)}${'l10n.hours'} ${'l10n.left'}';
+        return '${d.inDays}${l10n.days} ${d.inHours.remainder(24)}${l10n.hours} ${l10n.left}';
       } else if (d.inHours > 0) {
-        return '${d.inHours}${'l10n.hours'} ${d.inMinutes.remainder(60)}${'l10n.minutes'} ${'l10n.left'}';
+        return '${d.inHours}${l10n.hours} ${d.inMinutes.remainder(60)}${l10n.minutes} ${l10n.left}';
       } else if (d.inMinutes > 0) {
-        return '${d.inMinutes}${'l10n.minutes'} ${'l10n.left'}';
+        return '${d.inMinutes}${l10n.minutes} ${l10n.left}';
       }
-      return 'l10n.completed';
+      return l10n.completed;
     } catch (e) {
-      return 'AppLocalizations.of(context)!.invalidDuration';
+      return AppLocalizations.of(context)!.invalidduration;
     }
   }
 
@@ -105,12 +105,12 @@ class _OrdersScreenState extends State<OrdersScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('l10n.cancelOrder'),
-        content: Text('l10n.cancelOrderConfirm(orderId.toString())'),
+        title: Text(l10n.cancelorder),
+        content: Text(l10n.cancelorderconfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('l10n.no'),
+            child: Text(l10n.no),
           ),
           TextButton(
             onPressed: () {
@@ -145,7 +145,7 @@ class _OrdersScreenState extends State<OrdersScreen>
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          title: Text('l10n.orders', style: theme.textTheme.titleLarge),
+          title: Text(l10n.orders, style: theme.textTheme.titleLarge),
           centerTitle: true,
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -329,7 +329,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              order.status ?? 'l10n.unknownStatus',
+                              order.status ?? l10n.unknownname,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: _getStatusColor(order.status, context),
                                 fontWeight: FontWeight.w500,
@@ -405,13 +405,13 @@ class _OrdersScreenState extends State<OrdersScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'l10n.items',
+                                l10n.items,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.onSurface.withOpacity(0.6),
                                 ),
                               ),
                               Text(
-                                'order.itemsCount ?? 0 ${'l10n.items'}',
+                                'order.itemsCount ?? 0 ${l10n.items}',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.onSurface,
@@ -443,7 +443,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                           ),
                         ),
                         icon: Icon(Icons.close, size: 18),
-                        label: Text('l10n.cancelOrder'),
+                        label: Text(l10n.cancelorder),
                       ),
                     ),
                   ],
@@ -473,7 +473,7 @@ class _OrdersScreenState extends State<OrdersScreen>
             ),
             const SizedBox(height: 24),
             Text(
-              'l10n.errorLoadingOrders',
+              l10n.errorloadingorders,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: colorScheme.onSurface,
               ),
@@ -495,7 +495,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
-              child: Text('l10n.retry'),
+              child: Text(l10n.retry),
             ),
           ],
         ),
@@ -520,7 +520,7 @@ class _OrdersScreenState extends State<OrdersScreen>
             ),
             const SizedBox(height: 24),
             Text(
-              'l10n.noOrders',
+              l10n.noorders,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -543,7 +543,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
-              child: Text('l10n.startShopping'),
+              child: Text(l10n.startshopping),
             ),
           ],
         ),

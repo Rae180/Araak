@@ -127,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
       validator: (value) {
         if (value == null || value.isEmpty) return 'email required';
         if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-            .hasMatch(value)) return 'invalid email';
+            .hasMatch(value)) return l10n.invalidemail;
         return null;
       },
     );
@@ -161,8 +161,8 @@ class _LoginPageState extends State<LoginPage> {
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _submitForm(),
       validator: (value) {
-        if (value == null || value.isEmpty) return 'password required';
-        if (value.length < 6) return 'invalid password';
+        if (value == null || value.isEmpty) return l10n.passrequired;
+        if (value.length < 6) return l10n.invalidpass;
         return null;
       },
     );

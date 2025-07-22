@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:start/core/api_service/network_api_service_http.dart';
 import 'package:start/core/constants/app_constants.dart';
 import 'package:start/core/managers/theme_manager.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:start/features/ProductsFolder/Bloc/RoomDetailesBloc/room_details_bloc.dart';
 
 class CustomizationsPage extends StatefulWidget {
@@ -31,6 +32,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocProvider(
       create: (context) => RoomDetailsBloc(client: NetworkApiServiceHttp())
@@ -49,7 +51,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            'Customize Your Item',
+            l10n.customizeitem,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -66,6 +68,10 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                 ),
               );
             } else if (state is RoomDetailsSuccess) {
+              if (state.room.room == null) {
+                // Handle null room case
+                return Center(child: Text(l10n.roomdata));
+              }
               return Column(
                 children: [
                   // Item Selection Section
@@ -73,13 +79,13 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
 
                   // Customization Form
                   if (_selectedItemIndex != null)
-                    Expanded(child: _buildCustomizationForm(theme))
+                    Expanded(child: _buildCustomizationForm(context, theme))
                   else
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 32),
                       child: Center(
                         child: Text(
-                          'Choose an item to customize',
+                          l10n.chooseitem,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
@@ -107,6 +113,11 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
 
   Widget _buildItemSelectionPanel(
       BuildContext context, RoomDetailsSuccess state, ThemeData theme) {
+    final room = state.room.room;
+    final l10n = AppLocalizations.of(context)!;
+    if (room == null) return SizedBox(); // Handle null case
+
+    final items = room.items ?? [];
     return Padding(
       padding: const EdgeInsets.all(AppConstants.sectionPadding),
       child: Card(
@@ -136,18 +147,18 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      state.room.room!.name!,
+                      room.name ?? l10n.unknownname,
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Base Price: \$${state.room.room!.price!}',
+                      '${l10n.baseprice}: \$${room.price?.toStringAsFixed(2) ?? 'N/A'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                     Text(
-                      'Assembly Time: ${state.room.room!.time!}',
+                      '${l10n.assemblytime}: ${room.time ?? 'N/A'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
@@ -156,7 +167,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
 
                     // Item Selection Title
                     Text(
-                      'Select Item to Customize:',
+                      '${l10n.customizeitem}:',
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
@@ -166,7 +177,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                       height: 150,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: state.room.room!.items!.length,
+                        itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = state.room.room!.items![index];
                           final isSelected = _selectedItemIndex == index;
@@ -227,7 +238,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            item.name!,
+                                            item.name ?? l10n.unknownname,
                                             style: theme.textTheme.bodyLarge,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
@@ -238,13 +249,13 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                                             style: theme.textTheme.bodySmall,
                                           ),
                                           Text(
-                                            'Price: \$${item.price!.toStringAsFixed(2)}',
+                                            '${l10n.price}: \$${item.price?.toStringAsFixed(2) ?? 'N/A'}',
                                             style: theme.textTheme.bodySmall,
                                           ),
                                           if (isSelected) ...[
                                             const SizedBox(height: 8),
                                             Text(
-                                              'Selected',
+                                              l10n.selected,
                                               style: theme.textTheme.bodySmall
                                                   ?.copyWith(
                                                 color:
@@ -274,7 +285,8 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
     );
   }
 
-  Widget _buildCustomizationForm(ThemeData theme) {
+  Widget _buildCustomizationForm(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -285,13 +297,13 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
           children: [
             // Wood Customization
             _buildCustomizationSection(
-              title: 'Wood Customization',
+              title: l10n.woodcustomize,
               theme: theme,
               children: [
                 DropdownButtonFormField<String>(
                   value: selectedValue,
                   decoration: InputDecoration(
-                    labelText: 'Wood Type',
+                    labelText: l10n.woodtype,
                     prefixIcon:
                         Icon(Icons.forest, color: theme.iconTheme.color),
                     border: OutlineInputBorder(
@@ -313,7 +325,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                 TextFormField(
                   controller: _woodColor,
                   decoration: InputDecoration(
-                    labelText: 'Wood Color',
+                    labelText: l10n.woodcolor,
                     hintText: 'e.g. Ebony Black',
                     prefixIcon:
                         Icon(Icons.color_lens, color: theme.iconTheme.color),
@@ -328,13 +340,13 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
 
             // Fabric Customization
             _buildCustomizationSection(
-              title: 'Fabric Customization',
+              title: l10n.fabriccustomization,
               theme: theme,
               children: [
                 DropdownButtonFormField<String>(
                   value: selectedValue,
                   decoration: InputDecoration(
-                    labelText: 'Fabric Type',
+                    labelText: l10n.fabrictype,
                     prefixIcon:
                         Icon(Icons.texture, color: theme.iconTheme.color),
                     border: OutlineInputBorder(
@@ -356,7 +368,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                 TextFormField(
                   controller: _FabricColors,
                   decoration: InputDecoration(
-                    labelText: 'Fabric Color',
+                    labelText: l10n.facriccolor,
                     hintText: 'e.g. Navy Blue',
                     prefixIcon:
                         Icon(Icons.color_lens, color: theme.iconTheme.color),
@@ -372,7 +384,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
 
             // Dimensions
             _buildCustomizationSection(
-              title: 'Dimension Adjustments',
+              title: l10n.dimesionad,
               theme: theme,
               children: [
                 Row(
@@ -382,7 +394,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                         controller: _Length,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Length (cm)',
+                          labelText: '${l10n.length} (cm)',
                           prefixIcon: Icon(Icons.straighten,
                               color: theme.iconTheme.color),
                           border: OutlineInputBorder(
@@ -398,7 +410,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                         controller: _Width,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Width (cm)',
+                          labelText: '${l10n.width} (cm)',
                           prefixIcon: Icon(Icons.straighten,
                               color: theme.iconTheme.color),
                           border: OutlineInputBorder(
@@ -415,7 +427,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                   controller: _Hieght,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Height (cm)',
+                    labelText: '${l10n.height} (cm)',
                     prefixIcon:
                         Icon(Icons.height, color: theme.iconTheme.color),
                     border: OutlineInputBorder(
@@ -428,7 +440,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
             ),
 
             // Warning Banner
-            _buildWarningBanner(theme),
+            _buildWarningBanner(context,theme),
 
             // Action Button
             Padding(
@@ -437,7 +449,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
                 onPressed: () {},
                 icon: Icon(Icons.check, color: theme.colorScheme.onPrimary),
                 label: Text(
-                  'Confirm Customizations',
+                  l10n.confirmation,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onPrimary,
                   ),
@@ -495,7 +507,8 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
     );
   }
 
-  Widget _buildWarningBanner(ThemeData theme) {
+  Widget _buildWarningBanner(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       color: theme.colorScheme.errorContainer,
       elevation: 0,
@@ -513,7 +526,7 @@ class _CustomizationsPageState extends State<CustomizationsPage> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Wood type not found. Please select a valid option.',
+                l10n.woodtypenotfound,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onErrorContainer,
                 ),

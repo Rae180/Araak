@@ -83,7 +83,7 @@ class SettingScreen extends StatelessWidget {
                 _buildSettingsSection(
                   context,
                   icon: Icons.account_circle,
-                  title: 'l10n.accountSettings',
+                  title: l10n.accountsettings,
                   children: [
                     _buildSettingsItem(
                       context,
@@ -116,7 +116,7 @@ class SettingScreen extends StatelessWidget {
                 _buildSettingsSection(
                   context,
                   icon: Icons.settings,
-                  title: 'l10n.appSettings',
+                  title: l10n.appsettings,
                   children: [
                     _buildThemeSwitcher(context),
                     _buildLanguageSwitcher(context),
@@ -128,7 +128,7 @@ class SettingScreen extends StatelessWidget {
                 _buildSettingsSection(
                   context,
                   icon: Icons.shopping_cart,
-                  title: 'l10n.orders',
+                  title: l10n.orders,
                   children: [
                     _buildSettingsItem(
                       context,
@@ -145,19 +145,19 @@ class SettingScreen extends StatelessWidget {
                 _buildSettingsSection(
                   context,
                   icon: Icons.support_agent,
-                  title: 'l10n.support',
+                  title: l10n.support,
                   children: [
                     _buildSettingsItem(
                       context,
                       icon: Icons.help_outline,
-                      title: 'l10n.helpSupport',
+                      title: l10n.helpsupport,
                       onTap:() {},
                       // () => _launchSupportUrl(context),
                     ),
                     _buildSettingsItem(
                       context,
                       icon: Icons.email_outlined,
-                      title: 'l10n.contactus',
+                      title: l10n.contactus,
                       onTap: () {},
                       //() => _launchEmailSupport(context),
                     ),
@@ -169,7 +169,7 @@ class SettingScreen extends StatelessWidget {
                 _buildSettingsSection(
                   context,
                   icon: Icons.warning_amber_rounded,
-                  title: 'l10n.dangerZone',
+                  title: l10n.dangerzone,
                   children: [
                     _buildSettingsItem(
                       context,
@@ -217,7 +217,7 @@ class SettingScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userName ?? 'AppLocalizations.of(context)!.guest',
+                  userName ?? AppLocalizations.of(context)!.guest,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
